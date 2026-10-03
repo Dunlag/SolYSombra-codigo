@@ -1,7 +1,8 @@
 # Sol y Sombra — diseño del MVP (fases 0 y 1)
 
-Fecha: 2026-10-03. Nombre definitivo: **Sol y Sombra** (decisión de Fernando; es lo único que se
-conserva del planteamiento anterior). Al ser un término genérico, las palabras clave van en el
+Fecha: 2026-10-03. Nombre de trabajo: **Sol y Sombra** (es lo único que se conserva del
+planteamiento anterior). El nombre y el dominio se valoran por última vez justo antes de publicar;
+hasta entonces no se compra nada. Al ser un término genérico, las palabras clave van en el
 lema y en los títulos ("terrazas de Málaga al sol o a la sombra"), no en la marca.
 
 ## Objetivo
