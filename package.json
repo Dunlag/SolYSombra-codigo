@@ -1,0 +1,14 @@
+{
+  "name": "solysombra",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "datos:descargar": "node pipeline/descargar.ts",
+    "datos:exportar": "node pipeline/exportar.ts",
+    "horas": "node pipeline/horas.ts"
+  },
+  "dependencies": {
+    "suncalc": "^2.1.0"
+  }
+}
