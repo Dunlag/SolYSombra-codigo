@@ -12,7 +12,9 @@ export function aTerraza(f: any, cerca: (p: Punto) => Edificio[]): Terraza | 'si
   const p = f.properties ?? {};
   const nombre = String(p.nombre_lugar ?? '').trim();
   const [lon, lat] = f.geometry?.coordinates ?? [];
-  const x = p.x == null ? NaN : Number(p.x), y = p.y == null ? NaN : Number(p.y);
+  // Number(null) y Number('') valen 0: un dato ausente no debe colarse como coordenada
+  const num = (v: unknown) => (v == null || v === '' ? NaN : Number(v));
+  const x = num(p.x), y = num(p.y);
   if (!nombre || ![lon, lat, x, y].every(Number.isFinite)) return 'sin-datos';
 
   const edificios = cerca([x, y]);

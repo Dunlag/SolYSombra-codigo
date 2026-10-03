@@ -35,5 +35,6 @@ test('sin nombre: sin-datos', () => {
 
 test('sin coordenadas: sin-datos', () => {
   assert.equal(aTerraza(registro({ x: null }), sinEdificios), 'sin-datos');
+  assert.equal(aTerraza(registro({ y: '' }), sinEdificios), 'sin-datos');
   assert.equal(aTerraza({ ...registro({}), geometry: null }, sinEdificios), 'sin-datos');
 });
