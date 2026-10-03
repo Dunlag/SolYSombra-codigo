@@ -1,6 +1,8 @@
-# SolYSombra — diseño del MVP (fases 0 y 1)
+# Sol y Sombra — diseño del MVP (fases 0 y 1)
 
-Fecha: 2026-10-03. Nombre provisional: se revisa en la fase 0.
+Fecha: 2026-10-03. Nombre definitivo: **Sol y Sombra** (decisión de Fernando; es lo único que se
+conserva del planteamiento anterior). Al ser un término genérico, las palabras clave van en el
+lema y en los títulos ("terrazas de Málaga al sol o a la sombra"), no en la marca.
 
 ## Objetivo
 
@@ -115,7 +117,8 @@ Las páginas por terraza y por barrio se diseñan en la fase 2 (SEO), sobre este
 ## Fase 0: orden de trabajo
 
 1. Spike de datos: descargar, inspeccionar, calcular el horizonte de 5 terrazas y validarlas.
-2. Nombre y dominio: análisis de competencia y 3-5 propuestas de nombre con dominio libre.
+2. Dominio para el nombre Sol y Sombra (comprobado el 2026-10-03: `solysombra.es`, `.com`, `.net`
+   y `.org` están ocupados; libres `solysombra.app`, `solysombramalaga.es` y `solysombramalaga.com`).
 
 ## Fuera de alcance
 
