@@ -16,6 +16,24 @@ por sol/sombra para "ahora", cambia la hora y acierta al llegar al sitio.
 - TypeScript de principio a fin.
 - Ratos libres: cada pieza debe poder terminarse en una sesión corta.
 
+## Aprendizaje y forma de trabajo
+
+El proyecto es también un ejercicio de aprendizaje con dos objetivos:
+
+- Entender cada fase (producto, SEO, marketing, lanzamiento): cada una empieza con una explicación
+  de qué se hace y por qué.
+- Aprender a trabajar con Claude de forma **totalmente autónoma**: Claude ejecuta el trabajo de
+  principio a fin y Fernando solo supervisa y aprueba. En la práctica:
+  - Claude decide por defecto y deja escrita la decisión; solo pregunta lo que únicamente Fernando
+    puede responder.
+  - Cada tarea termina con una comprobación que Claude ejecuta por sí mismo (test, script, URL).
+  - Los puntos de aprobación son pocos y explícitos: spec, plan, validación de campo y todo lo que
+    sea irreversible o salga al exterior (comprar dominio, publicar, contactar con medios).
+  - Cuando algo requiera a Fernando (crear una cuenta, pagar, ir a una terraza), se le pide con
+    pasos concretos.
+  - Se explica qué configuración hace posible la autonomía (permisos, agentes, tareas programadas)
+    a medida que se use.
+
 ## Fuentes de datos
 
 | Dato | Fuente | Notas |
