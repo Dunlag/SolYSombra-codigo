@@ -1,0 +1,105 @@
+# SolYSombra — diseño del MVP (fases 0 y 1)
+
+Fecha: 2026-10-03. Nombre provisional: se revisa en la fase 0.
+
+## Objetivo
+
+Web que muestra en un mapa las terrazas de bares y restaurantes de **Málaga** y dice si cada una
+está al sol o a la sombra a la hora y fecha elegidas. Sombra en verano, sol en invierno.
+
+Éxito del MVP: una persona en Málaga abre la web en el móvil, ve las terrazas cercanas coloreadas
+por sol/sombra para "ahora", cambia la hora y acierta al llegar al sitio.
+
+## Restricciones
+
+- 0 €/mes (solo dominio). Sin backend ni base de datos.
+- TypeScript de principio a fin.
+- Ratos libres: cada pieza debe poder terminarse en una sesión corta.
+
+## Fuentes de datos
+
+| Dato | Fuente | Notas |
+|---|---|---|
+| Terrazas | Ayuntamiento de Málaga, "Ocupación en vía pública de mesas y sillas - Planos" (`da_ovpMesasPlanos-4326.geojson`), CC BY 4.0 | Geometría **punto**. Campos útiles: `nombre_lugar`, `via`, `direccion_actividad`, `numero`, `distrito`, `metros`, `plano` (PDF). Los planos enlazados son de 2026-03. |
+| Edificios | Catastro INSPIRE Buildings (ATOM, municipio de Málaga), GML en EPSG:25830 | Huella por parte de edificio y `numberOfFloorsAboveGround`. |
+| Posición del sol | Librería `suncalc` | Cálculo en el navegador. |
+
+Solo aparecen terrazas en vía pública con licencia municipal. Las terrazas en suelo privado
+(patios, azoteas) quedan fuera de la v1.
+
+## Arquitectura
+
+```
+datos municipales + Catastro
+        │  (scripts locales, se ejecutan a mano)
+        ▼
+  terrazas.json  ──►  sitio Astro estático  ──►  Cloudflare Pages
+                        └ isla React: mapa MapLibre + suncalc
+```
+
+### 1. Pipeline de datos (`pipeline/`)
+
+Scripts Node/TS ejecutados en local; su salida se guarda en el repo.
+
+1. `descargar`: baja el GeoJSON de terrazas y el GML de edificios a `pipeline/raw/` (no versionado).
+2. `edificios`: convierte el GML a una lista de polígonos con altura = `plantas × 3 m`, en
+   coordenadas métricas (EPSG:25830) para medir distancias sin conversiones.
+3. `horizonte`: para cada terraza calcula su **perfil de horizonte**: 180 valores (uno cada 2° de
+   azimut) con el mayor ángulo de elevación `atan(altura / distancia)` de los edificios que cruza
+   un rayo de 150 m en esa dirección. Índice espacial para no comparar con todos los edificios.
+4. `exportar`: escribe `src/data/terrazas.json` con `id`, `nombre`, `direccion`, `distrito`,
+   `lat`, `lon`, `metros` y `horizonte` (grados enteros).
+
+Punto de muestreo: el punto municipal suele caer sobre la fachada o dentro del edificio del local.
+Se desplaza unos metros hacia fuera del edificio que lo contiene, en perpendicular a la fachada
+más cercana. El spike de la fase 0 decide si esto basta o hay que usar el plano PDF.
+
+### 2. Función sol/sombra (`src/lib/sol.ts`)
+
+`estaAlSol(horizonte, lat, lon, fecha): 'sol' | 'sombra' | 'noche'`
+
+- `noche` si la altura del sol es ≤ 0.
+- `sol` si la altura del sol supera `horizonte[azimut]`; si no, `sombra`.
+
+Función pura, la usan el mapa y la generación de páginas. Es la única lógica con test.
+
+### 3. Web (`src/`)
+
+- **Astro** genera HTML estático. Una isla React contiene el mapa.
+- **Mapa:** MapLibre GL con teselas de OpenFreeMap (sin clave ni coste). Un marcador por terraza,
+  color según `estaAlSol`. Selector de hora y fecha; botón "ahora"; botón de geolocalización.
+- **Ficha:** al pulsar un marcador: nombre, dirección, estado actual, hasta qué hora sigue así y
+  enlace para abrir la ubicación en la app de mapas del móvil.
+- **PWA:** manifiesto e icono para poder instalarla. Sin modo offline en la v1.
+- Aviso visible de limitaciones y atribuciones (Ayuntamiento de Málaga, Catastro, OpenStreetMap).
+
+Las páginas por terraza y por barrio se diseñan en la fase 2 (SEO), sobre este mismo JSON.
+
+## Limitaciones conocidas de la v1
+
+- No se modelan toldos, sombrillas, árboles ni relieve.
+- La altura de los edificios es una estimación por número de plantas.
+- La posición de la terraza es aproximada (un punto, no su contorno).
+
+## Errores y casos límite
+
+- Terraza sin edificios cerca: horizonte todo a 0, siempre al sol de día.
+- Registro sin nombre o sin coordenadas: se descarta en `exportar` y se cuenta en el log.
+- Geolocalización denegada: el mapa se queda centrado en el centro de Málaga.
+
+## Pruebas
+
+- Test de `estaAlSol`: de noche; horizonte despejado a mediodía; horizonte tapado en la dirección
+  del sol; mismo horizonte con sol de invierno y de verano.
+- **Validación de campo (puerta de la fase 0):** 5 terrazas conocidas, comparadas en persona a una
+  hora concreta. Con más de 1 fallo de 5 se revisa el modelo antes de construir la web.
+
+## Fase 0: orden de trabajo
+
+1. Spike de datos: descargar, inspeccionar, calcular el horizonte de 5 terrazas y validarlas.
+2. Nombre y dominio: análisis de competencia y 3-5 propuestas de nombre con dominio libre.
+
+## Fuera de alcance
+
+Cuentas de usuario, aportaciones de usuarios, capa visual de sombras, reseñas, otras ciudades,
+monetización, app nativa.
