@@ -15,6 +15,4 @@ async function bajar(url: string, destino: string) {
 mkdirSync(RAW, { recursive: true });
 await bajar(TERRAZAS, `${RAW}/terrazas.geojson`);
 await bajar(EDIFICIOS, `${RAW}/edificios.zip`);
-// ponytail: descompresión solo en Windows (Expand-Archive); usar unzip si se ejecuta en otro sistema
-execFileSync('powershell', ['-NoProfile', '-Command',
-  `Expand-Archive -Force '${RAW}/edificios.zip' '${RAW}'`]);
+execFileSync('unzip', ['-o', `${RAW}/edificios.zip`, '-d', RAW]);
