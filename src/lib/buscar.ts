@@ -1,4 +1,5 @@
 // Búsqueda de local por nombre/dirección y de barrio. Lógica pura (sin DOM).
+import type { Zona } from './alias.ts';
 import type { Terraza } from './terrazas.ts';
 
 /** Minúsculas y sin acentos. */
@@ -35,7 +36,7 @@ export type Barrio = {
   geometria: { type: 'Polygon' | 'MultiPolygon'; coordinates: unknown };
   terrazas: string[];
 };
-export type Resultado = { tipo: 'barrio' | 'local'; i: number }; // `i` indexa `barrios` o `terrazas` según el tipo
+export type Resultado = { tipo: 'barrio' | 'zona' | 'local'; i: number }; // `i` indexa `barrios`, `zonas` o `terrazas` según el tipo
 
 // El artículo inicial no cuenta para la coincidencia exacta: «malagueta» ES «La Malagueta».
 const sinArticulo = (s: string) => s.replace(/^(la|el|los|las)\s+/, '');
@@ -44,25 +45,32 @@ const exacto = (nombre: string, q: string) => {
   return n.length === m.length && contiene(n, m) === 0;
 };
 
-/** Barrios: coincidencia exacta, luego los que empiezan por la consulta, luego los que la contienen (mismo comparador que los locales). */
-export function buscarBarrios(barrios: Barrio[], consulta: string, max = 3): number[] {
+const rango = (textos: string[], q: string): number =>
+  Math.min(...textos.map((x) => { const p = contiene(normalizar(x), q); return exacto(x, q) ? 0 : p === 0 ? 1 : p > 0 ? 2 : 3; }));
+
+/** Barrios y zonas: coincidencia exacta (del nombre o de un alias), luego prefijo, luego «contiene». Una zona que apunta a un
+ *  único barrio real no se lista: sus alias cuentan para ese barrio (sin duplicados). */
+export function buscarAgrupados(barrios: Barrio[], zonas: Zona[], consulta: string, max = 4): (Resultado & { r: number })[] {
   const q = normalizar(consulta).trim();
   if (q.length < 2) return [];
-  const puntos: [number, number][] = [];
-  barrios.forEach((b, i) => {
-    const p = contiene(normalizar(b.nombre), q);
-    if (exacto(b.nombre, q)) puntos.push([0, i]);
-    else if (p >= 0) puntos.push([p === 0 ? 1 : 2, i]);
-  });
-  return puntos.sort((a, b) => a[0] - b[0] || barrios[a[1]].nombre.localeCompare(barrios[b[1]].nombre) || a[1] - b[1]).slice(0, max).map(([, i]) => i);
+  const extra = new Map<number, string[]>();
+  zonas.forEach((z) => z.barrio !== undefined && extra.set(z.barrio, [...(extra.get(z.barrio) ?? []), z.nombre, z.nombreEn, ...z.alias]));
+  const c: (Resultado & { r: number; n: string })[] = [
+    ...barrios.map((b, i) => ({ tipo: 'barrio' as const, i, n: b.nombre, r: rango([b.nombre, ...(extra.get(i) ?? [])], q) })),
+    ...zonas.flatMap((z, i) => (z.barrio === undefined ? [{ tipo: 'zona' as const, i, n: z.nombre, r: rango([z.nombre, z.nombreEn, ...z.alias], q) }] : [])),
+  ];
+  return c.filter((x) => x.r < 3).sort((a, b) => a.r - b.r || a.n.localeCompare(b.n) || a.i - b.i).slice(0, max);
 }
 
-/** Barrios (máx. 3) y locales mezclados. Un barrio con nombre exacto va antes que los locales; el resto de barrios, tras ellos. */
-export function buscarTodo(terrazas: Terraza[], barrios: Barrio[], consulta: string, max = 8): Resultado[] {
-  const q = normalizar(consulta).trim();
-  const bs = buscarBarrios(barrios, consulta).map((i): Resultado => ({ tipo: 'barrio', i }));
-  const exactos = bs.filter(({ i }) => exacto(barrios[i].nombre, q));
-  const resto = bs.filter((r) => !exactos.includes(r));
+/** Barrios: coincidencia exacta, luego los que empiezan por la consulta, luego los que la contienen (mismo comparador que los locales). */
+export const buscarBarrios = (barrios: Barrio[], consulta: string, max = 3): number[] =>
+  buscarAgrupados(barrios, [], consulta, max).map((x) => x.i);
+
+/** Barrios/zonas (máx. 4) y locales mezclados. Los exactos van antes que los locales; el resto, tras ellos. */
+export function buscarTodo(terrazas: Terraza[], barrios: Barrio[], consulta: string, max = 8, zonas: Zona[] = []): Resultado[] {
+  const ag = buscarAgrupados(barrios, zonas, consulta).map(({ tipo, i, r }) => ({ tipo, i, r }));
+  const exactos = ag.filter((x) => x.r === 0).map(({ tipo, i }): Resultado => ({ tipo, i }));
+  const resto = ag.filter((x) => x.r !== 0).map(({ tipo, i }): Resultado => ({ tipo, i }));
   const ls = buscar(terrazas, consulta, max).map((i): Resultado => ({ tipo: 'local', i }));
   return [...exactos, ...ls.slice(0, Math.max(0, max - exactos.length - resto.length)), ...resto];
 }

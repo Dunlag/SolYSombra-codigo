@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buscar, buscarBarrios, buscarTodo, normalizar, type Barrio } from './buscar.ts';
+import type { Zona } from './alias.ts';
 import type { Terraza } from './terrazas.ts';
 
 const t = (id: string, nombre: string, direccion = 'CALLE X'): Terraza =>
@@ -32,3 +33,18 @@ test('barrio exacto va antes que los locales; el parcial, después', () => {
   assert.deepEqual(buscarTodo(L, B, 'palo').map((r) => r.tipo), ['barrio', 'local', 'barrio']);
   assert.deepEqual(buscarTodo(L, B, 'p'), []);
 });
+
+const z = (nombre: string, alias: string[] = [], barrio?: number, n = 2): Zona =>
+  ({ id: nombre, nombre, nombreEn: nombre, alias, bbox: [0, 0, 1, 1], geometrias: [], terrazas: Array(n).fill('x'), barrio });
+test('zonas: por alias (insensible a acentos), exacta antes que locales', () => {
+  const Z = [z('Soho', ['Barrio de las Artes']), z('Distrito Centro')];
+  assert.deepEqual(buscarTodo(T, B, 'soho', 8, Z), [{ tipo: 'zona', i: 0 }]);
+  assert.deepEqual(buscarTodo(T, B, 'BARRIO DE LAS ARTÉS'.replace('É', 'E'), 8, Z), [{ tipo: 'zona', i: 0 }]);
+  assert.deepEqual(buscarTodo([t('s', 'SOHO CAFE'), ...T], B, 'soho', 8, Z).map((r) => r.tipo), ['zona', 'local']);
+});
+test('alias de un barrio real: sale ese barrio una sola vez, sin zona duplicada', () => {
+  const Z = [z('Centro histórico', ['Old Town'], 3)]; // apunta a B[3] = CIUDAD JARDÍN (solo para el test)
+  assert.deepEqual(buscarTodo([], B, 'old town', 8, Z), [{ tipo: 'barrio', i: 3 }]);
+  assert.deepEqual(buscarTodo([], B, 'ciudad jardin', 8, Z), [{ tipo: 'barrio', i: 3 }]);
+});
+test("zonas: '?' es comodín en la consulta contra el dato", () => assert.deepEqual(buscarTodo([], [], 'bailén', 8, [z('Distrito Bail?n')]), [{ tipo: 'zona', i: 0 }]));

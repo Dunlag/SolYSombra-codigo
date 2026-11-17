@@ -16,6 +16,7 @@ import { aFecha, ahora, aISO, MAX, MIN } from '../lib/hora.ts';
 import type { Nivel } from '../lib/ficha.ts';
 import { contarAlSol, estados, type Estado, type Terraza } from '../lib/terrazas.ts';
 import { minutosDelDia, textoHora } from '../lib/hora.ts';
+import { ZONAS, aZona, nombreZona, resolverZonas, type Zona } from '../lib/alias.ts';
 import type { Barrio } from '../lib/buscar.ts';
 import { textosFicha } from '../i18n/ficha';
 import Buscador from './Buscador';
@@ -27,6 +28,7 @@ import { useTema } from './useTema';
 
 const TERRAZAS = terrazasJson as Terraza[];
 const BARRIOS = barriosJson as Barrio[];
+const ZONAS_R = resolverZonas(ZONAS, BARRIOS, TERRAZAS);
 const CLAVE_IDIOMA = 'ss-idioma';
 
 // Histograma: 28 barras de 30 min entre 08:00 y 22:00, muestreadas en el centro de cada tramo.
@@ -59,7 +61,7 @@ export default function App() {
   // Chips-filtro: por defecto ambos apagados = mapa sin terrazas; el usuario elige qué ver.
   const [filtro, setFiltro] = useState({ sol: false, sombra: false });
   // Barrio activo: se demarca en el mapa y limita los marcadores; los chips deciden qué estado se ve dentro.
-  const [barrio, setBarrio] = useState<Barrio | null>(null);
+  const [barrio, setBarrio] = useState<(Zona & { tipo: 'barrio' | 'zona' }) | null>(null); // barrio real o zona (unión de barrios / caja)
   const [encuadre, setEncuadre] = useState<{ bbox: Barrio['bbox']; k: number } | null>(null);
   const [volarA, setVolarA] = useState<{ lon: number; lat: number; k: number } | null>(null);
 
@@ -83,12 +85,13 @@ export default function App() {
   const nSombra = useMemo(() => est.filter((e) => e === 'sombra').length, [est]);
   // Solo las elegidas ([] = ninguna), en escritorio y en móvil.
   const visibles = useMemo(() => (['sol', 'sombra'] as const).filter((e) => filtro[e]), [filtro]);
-  const elegirBarrio = (i: number) => {
-    const b = BARRIOS[i];
-    setBarrio(b);
+  const activar = (tipo: 'barrio' | 'zona', b: Zona) => {
+    setBarrio({ ...b, tipo });
     setSeleccionId(null); // la ficha taparía el barrio recién demarcado
     setEncuadre({ bbox: b.bbox, k: Date.now() });
   };
+  const elegirBarrio = (i: number) => activar('barrio', aZona(BARRIOS[i]));
+  const elegirZona = (i: number) => activar('zona', ZONAS_R[i]);
   const quitarBarrio = () => { setBarrio(null); setEncuadre(null); };
   // Esc quita el barrio si nada más lo ha consumido (lista del buscador, ficha, diálogo, hora).
   useEffect(() => {
@@ -127,7 +130,7 @@ export default function App() {
 
       <div className="app__mapa" inert={nivelFicha >= 1}>
         <Mapa terrazas={TERRAZAS} estados={est} seleccionId={seleccionId} onSelect={setSeleccionId} tema={tema} idioma={idioma} visibles={visibles} volarA={volarA}
-          barrio={barrio?.geometria ?? null} soloIds={barrio?.terrazas ?? null}
+          barrio={barrio?.geometrias ?? null} soloIds={barrio?.terrazas ?? null}
           encuadre={encuadre && { ...encuadre, padding: escritorio ? { top: 40, bottom: 40, left: 380 + 48, right: 90 } : { top: 130, bottom: 120, left: 24, right: 24 } }} />
         {/* Pill discreta: texto corto en móvil, largo en escritorio (CSS). */}
         <p className="app__rotulo"><span className="app__rotulo-c">{t.prototipo}</span><span className="app__rotulo-l">{t.prototipoLargo}</span></p>
@@ -142,14 +145,14 @@ export default function App() {
 
       {/* Escritorio: una columna flotante (buscador + hora/resumen, o ficha). En móvil los wrappers son `display: contents` y buscador, filtros, cabecera y barra de hora flotan sobre el mapa. */}
       <div className="app__panel">
-        <Buscador terrazas={TERRAZAS} barrios={BARRIOS} estados={est} idioma={idioma} onElegir={elegirDeBuscador} onElegirBarrio={elegirBarrio} inert={nivelFicha === 2} />
+        <Buscador terrazas={TERRAZAS} barrios={BARRIOS} zonas={ZONAS_R} estados={est} idioma={idioma} onElegir={elegirDeBuscador} onElegirBarrio={elegirBarrio} onElegirZona={elegirZona} inert={nivelFicha === 2} />
         {barrio && (
           <div className="app__barrio" inert={nivelFicha === 2}>
-            <button type="button" className="app__barrio-b" aria-label={t.barrioQuitar(barrio.nombre)} onClick={quitarBarrio}>
-              <span className="app__barrio-t">{t.barrio} <b>{barrio.nombre}</b></span>
+            <button type="button" className="app__barrio-b" aria-label={(barrio.tipo === 'zona' ? t.zonaQuitar : t.barrioQuitar)(nombreZona(barrio, idioma))} onClick={quitarBarrio}>
+              <span className="app__barrio-t">{barrio.tipo === 'zona' ? t.zona : t.barrio} <b>{nombreZona(barrio, idioma)}</b></span>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" /></svg>
             </button>
-            <p className="bus__sr" role="status">{visibles.length ? '' : t.barrioSinElegir}</p>
+            <p className="bus__sr" role="status">{visibles.length ? '' : barrio.tipo === 'zona' ? t.zonaSinElegir : t.barrioSinElegir}</p>
           </div>
         )}
         <div className="app__cuerpo">

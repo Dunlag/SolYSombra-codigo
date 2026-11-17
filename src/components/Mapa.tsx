@@ -22,8 +22,8 @@ type Props = {
   visibles: Estado[] | null;
   /** Pide volar a una terraza; `k` distinto fuerza repetir el vuelo al mismo punto. */
   volarA: { lon: number; lat: number; k: number } | null;
-  /** Geometría del barrio activo (se dibuja contorno + relleno suave) o null. */
-  barrio: Barrio['geometria'] | null;
+  /** Geometrías del barrio/zona activo (una o varias) (se dibuja contorno + relleno suave) o null. */
+  barrio: Barrio['geometria'][] | null;
   /** Ids de las terrazas del barrio activo: solo esas se ven (null = sin barrio). */
   soloIds: string[] | null;
   /** Pide encuadrar un bbox [minLon,minLat,maxLon,maxLat]; `padding` reserva la columna/barras flotantes. */
@@ -175,8 +175,9 @@ export default function Mapa({ terrazas, estados, seleccionId, onSelect, tema, i
   useEffect(() => {
     const m = mapa.current;
     if (!listo || !m) return;
-    (m.getSource(FUENTE_B) as GeoJSONSource).setData(barrio
-      ? { type: 'Feature', geometry: barrio, properties: {} } as never : { type: 'FeatureCollection', features: [] });
+    (m.getSource(FUENTE_B) as GeoJSONSource).setData({
+      type: 'FeatureCollection', features: (barrio ?? []).map((geometry) => ({ type: 'Feature', geometry, properties: {} })),
+    } as never);
   }, [listo, barrio]);
   useEffect(() => {
     const m = mapa.current;
