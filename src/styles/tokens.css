@@ -35,7 +35,7 @@
   --ss-foco-offset: 3px;
 
   /* panel inferior */
-  --ss-panel-reposo: 200px;
+  --ss-panel-reposo: 204px;
   --ss-panel-media: 64dvh;
   --ss-panel-completa: calc(100dvh - 44px);
   --ss-dur: 180ms;
