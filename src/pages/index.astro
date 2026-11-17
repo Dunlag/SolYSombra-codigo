@@ -1,0 +1,15 @@
+---
+// Cada archivo de src/pages es una ruta: index.astro => "/".
+import Base from '../layouts/Base.astro';
+import App from '../components/App';
+---
+<Base titulo="Sol y Sombra">
+  <!--
+    App es una "isla" de React: un trozo interactivo dentro de una página que, por lo
+    demás, es HTML estático (Astro no envía JS al navegador si no se lo pides).
+    client:only="react" = NO se renderiza en el servidor, solo en el navegador.
+    Es obligatorio aquí porque MapLibre necesita WebGL y `window`, que no existen
+    mientras Astro compila la página.
+  -->
+  <App client:only="react" />
+</Base>

@@ -1,0 +1,10 @@
+{
+  "name": "Sol y Sombra",
+  "short_name": "SolYSombra",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#16161D",
+  "theme_color": "#16161D",
+  "icons": [{ "src": "marcadores/wave-sol.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

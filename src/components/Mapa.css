@@ -1,0 +1,23 @@
+/* Contenedor como el tile del diseño: borde 1.5px y radio 18px (tokens de tokens.css).
+   overflow:hidden recorta el canvas de WebGL a las esquinas redondeadas. */
+.ss-mapa {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  box-sizing: border-box;
+  border: var(--ss-borde-w) solid var(--ss-borde);
+  border-radius: var(--ss-radio);
+  overflow: hidden;
+  background: var(--ss-tile);
+}
+/* La atribución de maplibre usa tamaño y fuente propios: se alinea con la tipografía de la app. */
+.ss-mapa .maplibregl-ctrl-attrib { font-family: var(--ss-font-mono); }
+.ss-mapa__error {
+  position: absolute; inset: 0; margin: 0; padding: var(--ss-space-6); box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  background: var(--ss-tile); color: var(--ss-texto); border: var(--ss-borde-w) solid var(--ss-borde);
+  border-radius: var(--ss-radio); font: 600 16px/1.4 var(--ss-font-body);
+}
+/* Botones de zoom a la zona táctil mínima (WCAG 2.5.5/2.5.8); el icono de maplibre queda centrado. */
+.ss-mapa .maplibregl-ctrl-group button { width: var(--ss-tap); height: var(--ss-tap); }
+.ss-mapa .maplibregl-canvas:focus-visible { outline: var(--ss-foco-ring); outline-offset: calc(-1 * var(--ss-foco-offset)); }

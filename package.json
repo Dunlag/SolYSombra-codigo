@@ -1,14 +1,35 @@
 {
   "name": "solysombra",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
     "test": "node --test",
     "datos:descargar": "node pipeline/descargar.ts",
     "datos:exportar": "node pipeline/exportar.ts",
     "horas": "node pipeline/horas.ts"
   },
   "dependencies": {
+    "@astrojs/react": "^7.1.9",
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "astro": "^7.4.12",
+    "maplibre-gl": "^6.18.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "suncalc": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=22.23.4"
   }
 }

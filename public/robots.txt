@@ -1,0 +1,3 @@
+# RECORDATORIO: quitar noindex y robots Disallow cuando los datos estén VALIDADOS en la calle (prueba de campo 2026-11-28)
+User-agent: *
+Disallow: /

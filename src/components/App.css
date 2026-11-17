@@ -1,0 +1,94 @@
+/* Maquetación de la pantalla A (V2-A): tiles en columna con hueco de 8px. Solo tokens --ss-*. */
+.app {
+  box-sizing: border-box; height: 100dvh; display: flex; flex-direction: column; gap: var(--ss-space-2);
+  padding: var(--ss-space-2); padding-bottom: calc(var(--ss-space-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--ss-hueco); color: var(--ss-texto); font-family: var(--ss-font-num);
+  max-width: 640px; margin-inline: auto;
+}
+/* La ficha (position:fixed, 200px en reposo) taparía el selector: mientras hay ficha se reserva su
+   hueco debajo del selector, y el mapa (flex:1) cede esa altura. Si el usuario expande la ficha, la
+   tapa a propósito. */
+.app[data-ficha] {
+  padding-bottom: calc(var(--ss-space-2) + var(--ss-panel-reposo) + var(--ss-space-2) + env(safe-area-inset-bottom, 0px));
+}
+.app__tile { background: var(--ss-tile); border: var(--ss-borde-w) solid var(--ss-borde); border-radius: var(--ss-radio); box-sizing: border-box; }
+.app__cabecera { display: flex; align-items: center; gap: 10px; height: 52px; padding: 4px 4px 4px 12px; flex-shrink: 0; }
+.app__cabecera svg { flex-shrink: 0; }
+.app__titulo { flex-grow: 1; margin: 0; font: 400 25px/1 var(--ss-font-label); letter-spacing: -.01em; white-space: nowrap; }
+.app__btn {
+  height: var(--ss-tap); min-width: var(--ss-tap); padding: 0 10px; display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; border: var(--ss-borde-w) solid var(--ss-texto); background: transparent;
+  font-family: var(--ss-font-mono); font-size: 13px; font-weight: 600;
+}
+/* Contenedor del mapa: flex:1 + min-height:0 para que ceda altura; el min-height de Mapa.css (320px)
+   se anula aquí porque con la ficha abierta el mapa tiene que poder encogerse. */
+.app__mapa { position: relative; flex: 1 1 auto; min-height: 0; }
+.app__mapa .ss-mapa { min-height: 0; }
+.app__rotulo {
+  position: absolute; left: 10px; top: 10px; margin: 0; max-width: 210px; padding: 7px 11px; pointer-events: none;
+  background: var(--ss-tile); border: var(--ss-borde-w) solid var(--ss-borde); border-radius: 12px;
+  font: italic 15px/1.15 var(--ss-font-label);
+}
+.sh { flex-shrink: 0; }
+
+.app__dialogo {
+  max-width: min(420px, calc(100vw - 2 * var(--ss-space-4))); padding: 0;
+  background: var(--ss-tile); color: var(--ss-texto); font-family: var(--ss-font-body);
+  border: var(--ss-borde-w) solid var(--ss-texto); border-radius: var(--ss-radio);
+}
+.app__dialogo-in { padding: var(--ss-space-5); }
+.app__dialogo::backdrop { background: rgb(0 0 0 / .6); }
+.app__dialogo h2 { margin: 0 0 var(--ss-space-3); font: 700 22px/1.1 var(--ss-font-num); }
+.app__dialogo h3 { margin: var(--ss-space-4) 0 var(--ss-space-2); font: 600 12px var(--ss-font-mono); }
+.app__dialogo ul { margin: 0; padding-left: var(--ss-space-5); }
+.app__cerrar { margin-top: var(--ss-space-4); width: 100%; }
+
+/* Móvil: los contenedores de la columna flotante no existen como cajas. */
+.app__panel, .app__cuerpo { display: contents; }
+
+/* ESCRITORIO (mismo breakpoint que useEscritorio.ts): mapa a pantalla completa y UNA columna flotante a la izquierda.
+   Móvil intacto: todo lo de aquí solo aplica dentro del @media. */
+@media (min-width: 1024px) {
+  .app { max-width: none; display: block; position: relative; padding: 0; overflow: hidden; }
+  .app[data-ficha] { padding: 0; }
+  .app__mapa { position: absolute; inset: 0; }
+  .app__mapa .ss-mapa { border: 0; border-radius: 0; }
+  .app__panel { display: flex; flex-direction: column; gap: var(--ss-space-2); position: absolute; z-index: 10; top: var(--ss-space-4); left: var(--ss-space-4); width: 380px; max-height: calc(100dvh - 2 * var(--ss-space-4)); }
+  .app__cuerpo { display: flex; flex-direction: column; gap: var(--ss-space-2); min-height: 0; overflow-y: auto; padding: 3px; margin: -3px; /* hueco para el anillo de foco */ }
+  .app__cuerpo > * { flex-shrink: 0; }
+  .app__tile, .sh, .app .ficha.ficha { box-shadow: 0 2px 10px rgb(0 0 0 / .35); }
+  /* Logo, idioma y limitaciones: píldora flotante arriba a la derecha. */
+  .app__cabecera { position: absolute; z-index: 10; top: var(--ss-space-4); right: var(--ss-space-4); height: 52px; padding-right: 4px; box-shadow: 0 2px 10px rgb(0 0 0 / .35); }
+  .app__titulo { flex-grow: 0; font-size: 21px; }
+  .app__filtros { position: absolute; z-index: 10; top: 76px; right: var(--ss-space-4); display: flex; gap: var(--ss-space-2); }
+  .app__chip {
+    min-height: var(--ss-tap); padding: 0 var(--ss-space-4); display: flex; align-items: center; gap: 6px; cursor: pointer;
+    border-radius: 999px; border: var(--ss-borde-w) solid var(--ss-texto); background: var(--ss-tile); color: var(--ss-texto);
+    font: 600 14px var(--ss-font-body); box-shadow: 0 2px 10px rgb(0 0 0 / .35);
+  }
+  .app__chip b { font: 800 15px var(--ss-font-num); }
+  .app__chip[data-e="sol"][aria-pressed="true"] { background: var(--ss-sol); color: var(--ss-hueco); }
+  .app__chip[data-e="sombra"][aria-pressed="true"] { background: var(--ss-sombra); color: var(--ss-hueco); }
+  .app__chip:focus-visible { outline: var(--ss-foco-ring); outline-offset: var(--ss-foco-offset); }
+  /* Rótulo "prototipo": píldora discreta abajo, a la derecha de la columna. */
+  .app__rotulo { left: calc(380px + 2 * var(--ss-space-4)); top: auto; bottom: var(--ss-space-6); max-width: 300px; padding: 4px 10px; font-size: 14px; opacity: .92; }
+  /* Zoom de maplibre bajo los chips. */
+  .app__mapa .maplibregl-ctrl-top-right { top: 130px; right: var(--ss-space-2); }
+  .app__mapa .maplibregl-ctrl-group { border-radius: var(--ss-radio); border: var(--ss-borde-w) solid var(--ss-borde); box-shadow: 0 2px 10px rgb(0 0 0 / .35); }
+  .app__mapa .maplibregl-ctrl-group button:focus-visible { outline: var(--ss-foco-ring); outline-offset: -3px; }
+  .app__resumen { display: flex; flex-direction: column; gap: var(--ss-space-2); padding: var(--ss-space-3); }
+  .app__resumen-t { font: italic 17px var(--ss-font-label); }
+  .app__resumen-cajas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ss-space-2); }
+  .app__resumen-cajas div { display: flex; flex-direction: column; gap: 4px; padding: var(--ss-space-2) var(--ss-space-3); border-radius: 12px; color: var(--ss-hueco); background: var(--caja); }
+  .app__resumen-cajas [data-e="sol"] { --caja: var(--ss-sol); }
+  .app__resumen-cajas [data-e="sombra"] { --caja: var(--ss-sombra); }
+  .app__resumen-cajas [data-e="noche"] { --caja: var(--ss-noche); }
+  .app__resumen-cajas b { font: 900 30px/.9 var(--ss-font-num); font-stretch: 62%; }
+  .app__resumen-cajas span { font: 600 11px var(--ss-font-mono); }
+  /* Ficha en la columna: sin asa ni niveles, alto natural. */
+  .app .ficha.ficha { /* doble clase: gana a .ficha[data-nivel] (alto fijo del sheet) */
+    position: static; overflow: hidden; max-width: none; margin: 0; height: auto; transition: none;
+  }
+  .app .ficha { padding-top: var(--ss-space-4); }
+  .app .ficha__cabecera { margin-top: 0; } /* el -12px del móvil compensaba el asa, que aquí no existe */
+}

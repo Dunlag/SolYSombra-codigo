@@ -1,0 +1,79 @@
+/* Selector de hora. Valores del diseño V2-C; colores y tipos siempre por tokens --ss-*. */
+.sh {
+  /* El diseño usa 84px, por encima del techo de 48px del brief: se mantiene a propósito.
+     clamp: a 360px de ancho baja a ~77px para que "00:00" quepa junto al contador. */
+  --ss-hora-size: clamp(64px, 21.5vw, 84px);
+  --sh-thumb: 44px;
+  position: relative; box-sizing: border-box; overflow: hidden;
+  background: var(--ss-tile); color: var(--ss-texto);
+  border: 2px solid var(--ss-activo); border-radius: var(--ss-radio);
+  display: flex; flex-direction: column; gap: 14px; padding: 14px 16px 16px;
+}
+.sh-cabecera { display: flex; align-items: flex-end; gap: var(--ss-space-3); }
+.sh-hora-col { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
+.sh-rel { font-family: var(--ss-font-label); font-style: italic; font-size: 19px; line-height: 1; }
+.sh-hora {
+  font-family: var(--ss-font-num); font-stretch: 62%; font-weight: 900;
+  font-size: var(--ss-hora-size); line-height: .86; letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums; /* las cifras no bailan al arrastrar */
+}
+.sh-cuenta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-bottom: 4px; flex-shrink: 0; }
+.sh-cuenta-n { font-family: var(--ss-font-num); font-stretch: 62%; font-weight: 900; font-size: 44px; line-height: .9; color: var(--ss-sol-texto); }
+.sh-cuenta-t { font-family: var(--ss-font-mono); font-size: 11px; font-weight: 600; text-align: right; line-height: 1.3; }
+
+/* Escala: barras + línea + knob + range transparente encima. */
+.sh-escala { position: relative; margin-top: 10px; padding-bottom: 20px; }
+.sh-barras { display: flex; align-items: flex-end; gap: 3px; padding-inline: calc(var(--sh-thumb) / 2); }
+.sh-barra { flex: 1 1 0; background: var(--ss-sol); border-radius: 4px 4px 2px 2px; box-shadow: inset 0 0 0 var(--ss-sol-borde) var(--ss-texto); }
+.sh-barra-0 { background: var(--ss-borde); border-radius: 3px; box-shadow: none; }
+.sh-barra-sel { background: var(--ss-texto); }
+/* El thumb nativo recorre [22px, ancho-22px]: la línea y el knob usan la misma fórmula para quedar bajo el dedo. */
+.sh-linea, .sh-knob {
+  position: absolute; pointer-events: none;
+  left: calc(var(--sh-thumb) / 2 + (100% - var(--sh-thumb)) * var(--pos));
+}
+.sh-linea { top: -8px; height: 78px; width: 3px; margin-left: -1.5px; background: var(--ss-texto); border-radius: 2px; }
+.sh-knob {
+  top: -14px; width: 16px; height: 16px; margin-left: -8px; box-sizing: border-box;
+  border-radius: 50%; background: var(--ss-foco); border: 3px solid var(--ss-tile);
+}
+.sh-rango {
+  -webkit-appearance: none; appearance: none; position: absolute; left: 0; top: 0;
+  width: 100%; height: 64px; margin: 0; background: transparent; cursor: ew-resize;
+  touch-action: pan-y; /* arrastre horizontal es del range; el vertical sigue haciendo scroll */
+}
+.sh-rango::-webkit-slider-runnable-track { height: 100%; background: transparent; }
+.sh-rango::-webkit-slider-thumb { -webkit-appearance: none; width: var(--sh-thumb); height: 72px; background: transparent; border: 0; }
+.sh-rango::-moz-range-track { background: transparent; }
+.sh-rango::-moz-range-thumb { width: var(--sh-thumb); height: 72px; background: transparent; border: 0; }
+/* Con el thumb invisible el foco lo dibujamos nosotros en el knob. */
+.sh-rango:focus-visible { outline: none; }
+.sh-rango:focus-visible ~ .sh-marcas { outline: none; }
+.sh-escala:has(.sh-rango:focus-visible) .sh-knob { outline: var(--ss-foco-ring); outline-offset: var(--ss-foco-offset); }
+.sh-escala:has(.sh-rango:focus-visible) .sh-barras { outline: 2px dashed var(--ss-foco); outline-offset: 4px; }
+
+.sh-marcas { position: absolute; left: 0; right: 0; bottom: 0; height: 14px; font-family: var(--ss-font-mono); font-size: 11px; font-weight: 600; }
+.sh-marcas span {
+  position: absolute; transform: translateX(-50%);
+  left: calc(var(--sh-thumb) / 2 + (100% - var(--sh-thumb)) * var(--p));
+}
+
+.sh-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.sh-chip, .sh-fecha {
+  box-sizing: border-box; min-height: var(--ss-tap); padding: 0 16px; border-radius: 999px;
+  border: var(--ss-borde-w) solid var(--ss-texto); background: transparent; color: var(--ss-texto);
+  font-family: var(--ss-font-num); font-weight: 600; font-size: 15px; white-space: nowrap; cursor: pointer;
+}
+/* Estado activo = relleno + check, no solo color. El ✓ es decorativo: texto alternativo vacío tras la "/"
+   (la primera línea es el respaldo para navegadores que no la entienden). */
+.sh-chip[aria-current="true"] { background: var(--ss-texto); color: var(--ss-tile); }
+.sh-chip[aria-current="true"]::before { content: "✓ "; content: "✓ " / ""; }
+.sh-fecha { display: inline-flex; align-items: center; padding: 0 12px; }
+.sh-fecha input {
+  font: inherit; font-family: var(--ss-font-mono); font-size: 13px; color: inherit;
+  background: transparent; border: 0; min-height: calc(var(--ss-tap) - 4px); cursor: pointer;
+}
+.sh-fecha:focus-within { outline: var(--ss-foco-ring); outline-offset: var(--ss-foco-offset); }
+.sh-fecha input:focus-visible { outline: none; }
+
+.sh-solo-lector { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

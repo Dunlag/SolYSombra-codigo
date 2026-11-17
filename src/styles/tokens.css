@@ -1,0 +1,82 @@
+/* Tokens de diseño V2 Kanagawa. Wave (oscuro) por defecto; Lotus (claro) si el
+   sistema lo pide; data-theme="dark|light" en <html> fuerza uno u otro. */
+:root {
+  color-scheme: dark;
+  /* Wave */
+  --ss-hueco: #16161D;   /* fondo de la app / contorno de marcadores */
+  --ss-tile: #1F1F28;
+  --ss-borde: #363646;
+  --ss-texto: #DCD7BA;
+  --ss-texto-2: #DCD7BA;
+  --ss-sol: #E6C384;
+  --ss-sombra: #7E9CD8;
+  --ss-noche: #957FB8;
+  --ss-foco: #FF9E3B;
+  --ss-activo: #FF9E3B;  /* tile activo */
+  /* El sol sobre el tile: en Wave se ve por color; en Lotus (1,78:1) hace falta tinta + contorno. */
+  --ss-sol-texto: var(--ss-sol);
+  --ss-sol-borde: 0px;
+
+  /* tipografía */
+  --ss-font-num: "Archivo Variable", "Archivo", system-ui, sans-serif;            /* cifras y títulos (wdth 62..125) */
+  --ss-font-label: "Instrument Serif", Georgia, serif;         /* etiquetas, cursiva */
+  --ss-font-mono: "JetBrains Mono", ui-monospace, monospace;   /* etiquetas y horas */
+  --ss-font-body: "IBM Plex Sans", system-ui, sans-serif;      /* texto */
+
+  /* espacio (base 4) */
+  --ss-space-1: 4px; --ss-space-2: 8px; --ss-space-3: 12px; --ss-space-4: 16px;
+  --ss-space-5: 20px; --ss-space-6: 24px; --ss-space-8: 32px; --ss-space-12: 48px;
+
+  /* formas e interacción */
+  --ss-radio: 18px;
+  --ss-borde-w: 1.5px;
+  --ss-tap: 44px;
+  --ss-foco-ring: 3px solid var(--ss-foco);
+  --ss-foco-offset: 3px;
+
+  /* panel inferior */
+  --ss-panel-reposo: 200px;
+  --ss-panel-media: 64dvh;
+  --ss-panel-completa: calc(100dvh - 44px);
+  --ss-dur: 180ms;
+  --ss-ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* Lotus: se aplica con el tema claro del sistema, salvo que se fuerce oscuro. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --ss-hueco: #F2ECBC;
+    --ss-tile: #E5DDB0;
+    --ss-borde: #545464;
+    --ss-texto: #1F1F28;
+    --ss-texto-2: #43436C;
+    --ss-sol: #DE9800;
+    --ss-sombra: #4D699B;
+    --ss-noche: #43436C;  /* el diseño no define noche Lotus: asumido */
+    --ss-foco: #1F1F28;   /* Lotus: el naranja no llega a 3:1 sobre sus fondos claros (WCAG 1.4.11) */
+    --ss-sol-texto: var(--ss-texto);
+    --ss-sol-borde: 1.5px;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ss-hueco: #F2ECBC;
+  --ss-tile: #E5DDB0;
+  --ss-borde: #545464;
+  --ss-texto: #1F1F28;
+  --ss-texto-2: #43436C;
+  --ss-sol: #DE9800;
+  --ss-sombra: #4D699B;
+  --ss-noche: #43436C;
+  --ss-foco: #1F1F28;   /* Lotus: el naranja no llega a 3:1 sobre sus fondos claros (WCAG 1.4.11) */
+  --ss-sol-texto: var(--ss-texto);
+  --ss-sol-borde: 1.5px;
+}
+
+:focus-visible { outline: var(--ss-foco-ring); outline-offset: var(--ss-foco-offset); }
+
+/* Sin animaciones si el usuario las desactiva. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --ss-dur: 0ms; }
+}

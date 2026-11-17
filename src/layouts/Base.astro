@@ -1,0 +1,51 @@
+---
+// Un layout .astro es una plantilla de página. Lo que va entre los "---" (frontmatter)
+// se ejecuta SOLO al compilar (en el servidor/build), nunca en el navegador.
+// <slot /> es el hueco donde se inserta el contenido de la página que usa este layout.
+import '../styles/tokens.css'; // Astro lo empaqueta y lo enlaza solo.
+// Fuentes autoalojadas (RGPD: sin peticiones a Google). Los @font-face llevan unicode-range:
+// el navegador solo descarga los subsets que la página usa realmente.
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource/instrument-serif/400.css';
+import '@fontsource/instrument-serif/400-italic.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/600.css';
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+const base = import.meta.env.BASE_URL.replace(/\/$/, "") + "/"; // con o sin barra final, según versión
+
+interface Props {
+  titulo: string;
+  lang?: 'es' | 'en';
+}
+const { titulo, lang = 'es' } = Astro.props;
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- Avisa al navegador de que la página soporta ambos temas (barras, formularios). -->
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#16161D" />
+    <!-- RECORDATORIO: quitar noindex y robots Disallow cuando los datos estén VALIDADOS en la calle (prueba de campo 2026-11-28) -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="manifest" href={`${base}manifest.webmanifest`} />
+    <link rel="icon" type="image/svg+xml" href={`${base}marcadores/wave-sol.svg`} />
+    <title>{titulo}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+<style is:global>
+  /* En Astro los <style> están acotados al componente; is:global los hace globales. */
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--ss-hueco);
+    color: var(--ss-texto);
+    font-family: var(--ss-font-body);
+  }
+  button { font: inherit; color: inherit; cursor: pointer; min-height: var(--ss-tap); }
+</style>
