@@ -32,13 +32,13 @@ test('rutas de raw absolutas y relativas al módulo', () => {
 test('descarga y extrae una vez; reutiliza todos los archivos al repetir', async (t) => {
   const e = entorno(t);
   await descargar({ raw: e.raw }, e.dependencias);
-  assert.equal(e.urls.length, 2);
+  assert.equal(e.urls.length, 3);
   assert.deepEqual(e.comandos, [
     ['unzip', '-v'], ['unzip', '-o', join(e.raw, 'edificios.zip'), '-d', e.raw],
   ]);
   assert.equal(readFileSync(join(e.raw, 'terrazas.geojson'), 'utf8'), 'contenido nuevo');
   await descargar({ raw: e.raw }, e.dependencias);
-  assert.equal(e.urls.length, 2);
+  assert.equal(e.urls.length, 3);
   assert.equal(e.comandos.length, 2);
 });
 
@@ -46,6 +46,7 @@ test('GML y terrazas existentes bastan aunque no haya ZIP ni unzip', async (t) =
   const e = entorno(t);
   writeFileSync(join(e.raw, GML), 'existente');
   writeFileSync(join(e.raw, 'terrazas.geojson'), 'existente');
+  writeFileSync(join(e.raw, 'barrios.geojson'), 'existente');
   await descargar({ raw: e.raw }, {
     fetch: async () => { throw new Error('no debe descargar'); },
     ejecutar: () => { throw new Error('no debe ejecutar'); },
@@ -57,7 +58,7 @@ test('ZIP existente y GML ausente: extrae sin descargar el ZIP', async (t) => {
   const e = entorno(t);
   writeFileSync(join(e.raw, 'edificios.zip'), 'ZIP existente');
   await descargar({ raw: e.raw }, e.dependencias);
-  assert.equal(e.urls.length, 1);
+  assert.equal(e.urls.length, 2);
   assert.match(e.urls[0], /geojson$/);
   assert.equal(readFileSync(join(e.raw, 'edificios.zip'), 'utf8'), 'ZIP existente');
   assert.ok(existsSync(join(e.raw, GML)));
@@ -65,9 +66,9 @@ test('ZIP existente y GML ausente: extrae sin descargar el ZIP', async (t) => {
 
 test('--forzar reemplaza descargas y vuelve a extraer', async (t) => {
   const e = entorno(t);
-  for (const archivo of [GML, 'terrazas.geojson', 'edificios.zip']) writeFileSync(join(e.raw, archivo), 'viejo');
+  for (const archivo of [GML, 'terrazas.geojson', 'barrios.geojson', 'edificios.zip']) writeFileSync(join(e.raw, archivo), 'viejo');
   await descargar({ raw: e.raw, forzar: true }, e.dependencias);
-  assert.equal(e.urls.length, 2);
+  assert.equal(e.urls.length, 3);
   assert.equal(e.comandos.length, 2);
   assert.equal(readFileSync(join(e.raw, 'edificios.zip'), 'utf8'), 'contenido nuevo');
   assert.equal(readFileSync(join(e.raw, GML), 'utf8'), 'extraído');

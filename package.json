@@ -10,6 +10,7 @@
     "test": "node --test",
     "datos:descargar": "node pipeline/descargar.ts",
     "datos:exportar": "node pipeline/exportar.ts",
+    "datos:barrios": "node pipeline/barrios.ts",
     "horas": "node pipeline/horas.ts"
   },
   "dependencies": {

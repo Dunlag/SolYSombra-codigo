@@ -15,13 +15,14 @@ npm ci
 npm run dev    # servidor de desarrollo
 npm test       # tests (node --test)
 npm run build  # genera dist/
+npm run datos:descargar && npm run datos:barrios  # regenera src/data/barrios.json (barrios + terrazas de cada uno)
 ```
 Requiere Node >= 22.23.4. Para servir bajo otra ruta base: `SS_BASE=/ruta npm run build`.
 
 ## Fuentes de datos
-Ayuntamiento de Málaga (terrazas), Catastro (edificios y alturas), OpenStreetMap y OpenFreeMap (mapa base).
+Ayuntamiento de Málaga (terrazas y barrios), Catastro (edificios y alturas), OpenStreetMap y OpenFreeMap (mapa base).
 
-Consulta [licencias, procedencia y transformaciones de los datos](DATA_LICENSE.md): el JSON de terrazas se distribuye con el criterio conservador CC BY-SA 4.0 ante la discrepancia del catálogo municipal. Los originales catastrales no se redistribuyen.
+Consulta [licencias, procedencia y transformaciones de los datos](DATA_LICENSE.md): los JSON de terrazas y de barrios (límites simplificados) se distribuyen con el criterio conservador CC BY-SA 4.0 ante la discrepancia del catálogo municipal. Los originales catastrales no se redistribuyen.
 
 ## Licencia
 

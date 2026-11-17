@@ -19,3 +19,4 @@
 .bus__est { font: 600 11px var(--ss-font-mono); text-transform: uppercase; flex-shrink: 0; }
 .bus__vacio { padding: var(--ss-space-3); font: italic 18px var(--ss-font-label); }
 .bus__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; }
+.bus__barrio { flex-shrink: 0; color: var(--ss-noche); }

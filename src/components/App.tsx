@@ -10,11 +10,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import terrazasJson from '../data/terrazas.json';
+import barriosJson from '../data/barrios.json';
 import { idiomaDe, useT, type Idioma } from '../i18n';
 import { aFecha, ahora, aISO, MAX, MIN } from '../lib/hora.ts';
 import type { Nivel } from '../lib/ficha.ts';
-import { contarAlSol, estados, type Terraza } from '../lib/terrazas.ts';
+import { contarAlSol, estados, type Estado, type Terraza } from '../lib/terrazas.ts';
 import { minutosDelDia, textoHora } from '../lib/hora.ts';
+import type { Barrio } from '../lib/buscar.ts';
 import { textosFicha } from '../i18n/ficha';
 import Buscador from './Buscador';
 import Ficha from './Ficha';
@@ -24,6 +26,7 @@ import { useEscritorio } from './useEscritorio';
 import { useTema } from './useTema';
 
 const TERRAZAS = terrazasJson as Terraza[];
+const BARRIOS = barriosJson as Barrio[];
 const CLAVE_IDIOMA = 'ss-idioma';
 
 // Histograma: 28 barras de 30 min entre 08:00 y 22:00, muestreadas en el centro de cada tramo.
@@ -55,6 +58,9 @@ export default function App() {
   const [nivelFicha, setNivelFicha] = useState<Nivel>(0);
   // Chips-filtro: por defecto ambos apagados = mapa sin terrazas; el usuario elige qué ver.
   const [filtro, setFiltro] = useState({ sol: false, sombra: false });
+  // Barrio activo: se demarca en el mapa y limita los marcadores; los chips deciden qué estado se ve dentro.
+  const [barrio, setBarrio] = useState<Barrio | null>(null);
+  const [encuadre, setEncuadre] = useState<{ bbox: Barrio['bbox']; k: number } | null>(null);
   const [volarA, setVolarA] = useState<{ lon: number; lat: number; k: number } | null>(null);
 
   useEffect(() => {
@@ -67,11 +73,30 @@ export default function App() {
   const histograma = useMemo(() => histogramaDelDia(fecha), [dia]);
   // Un único cálculo por cambio de hora (~1 ms): lo comparten el contador y el mapa.
   const est = useMemo(() => estados(TERRAZAS, fecha), [fecha]);
+  // Ids del barrio (null = sin barrio) y contadores de los chips: solo dentro del barrio mientras haya uno.
+  const idsBarrio = useMemo(() => (barrio ? new Set(barrio.terrazas) : null), [barrio]);
   const alSol = useMemo(() => est.filter((e) => e === 'sol').length, [est]);
+  const enBarrio = (e: Estado) => est.filter((x, i) => x === e && (!idsBarrio || idsBarrio.has(TERRAZAS[i].id))).length;
+  const chipSol = useMemo(() => enBarrio('sol'), [est, idsBarrio]);
+  const chipSombra = useMemo(() => enBarrio('sombra'), [est, idsBarrio]);
   const tf = textosFicha(idioma), tituloResumen = t.resumenA(textoHora(minutosDelDia(fecha)));
   const nSombra = useMemo(() => est.filter((e) => e === 'sombra').length, [est]);
   // Solo las elegidas ([] = ninguna), en escritorio y en móvil.
   const visibles = useMemo(() => (['sol', 'sombra'] as const).filter((e) => filtro[e]), [filtro]);
+  const elegirBarrio = (i: number) => {
+    const b = BARRIOS[i];
+    setBarrio(b);
+    setSeleccionId(null); // la ficha taparía el barrio recién demarcado
+    setEncuadre({ bbox: b.bbox, k: Date.now() });
+  };
+  const quitarBarrio = () => { setBarrio(null); setEncuadre(null); };
+  // Esc quita el barrio si nada más lo ha consumido (lista del buscador, ficha, diálogo, hora).
+  useEffect(() => {
+    if (!barrio) return;
+    const alTeclar = (e: KeyboardEvent) => { if (e.key === 'Escape' && !e.defaultPrevented && !dialogo.current?.open) quitarBarrio(); };
+    document.addEventListener('keydown', alTeclar);
+    return () => document.removeEventListener('keydown', alTeclar);
+  }, [barrio]);
   const elegirDeBuscador = (i: number) => {
     const x = TERRAZAS[i];
     setSeleccionId(x.id);
@@ -80,7 +105,7 @@ export default function App() {
   const terraza = useMemo(() => TERRAZAS.find((x) => x.id === seleccionId) ?? null, [seleccionId]);
 
   return (
-    <main className="app" data-ficha={terraza ? '' : undefined} data-nivel={terraza ? nivelFicha : undefined}>
+    <main className="app" data-barrio={barrio ? '' : undefined} data-ficha={terraza ? '' : undefined} data-nivel={terraza ? nivelFicha : undefined}>
       {/* `inert` (WCAG 2.4.11): la ficha en nivel media/completa (position:fixed) taparía el elemento enfocado
           con Tab. Es lo más simple que mantiene el foco visible: lo tapado deja de ser enfocable. La cabecera
           solo queda cubierta en el nivel completo. */}
@@ -101,13 +126,15 @@ export default function App() {
       </header>
 
       <div className="app__mapa" inert={nivelFicha >= 1}>
-        <Mapa terrazas={TERRAZAS} estados={est} seleccionId={seleccionId} onSelect={setSeleccionId} tema={tema} idioma={idioma} visibles={visibles} volarA={volarA} />
+        <Mapa terrazas={TERRAZAS} estados={est} seleccionId={seleccionId} onSelect={setSeleccionId} tema={tema} idioma={idioma} visibles={visibles} volarA={volarA}
+          barrio={barrio?.geometria ?? null} soloIds={barrio?.terrazas ?? null}
+          encuadre={encuadre && { ...encuadre, padding: escritorio ? { top: 40, bottom: 40, left: 380 + 48, right: 90 } : { top: 130, bottom: 120, left: 24, right: 24 } }} />
         {/* Pill discreta: texto corto en móvil, largo en escritorio (CSS). */}
         <p className="app__rotulo"><span className="app__rotulo-c">{t.prototipo}</span><span className="app__rotulo-l">{t.prototipoLargo}</span></p>
       </div>
 
       <div className="app__filtros" role="group" aria-label={t.filtros} inert={nivelFicha === 2}>
-          {([['sol', t.filtroSol, alSol], ['sombra', t.filtroSombra, nSombra]] as const).map(([e, txt, n]) => (
+          {([['sol', t.filtroSol, chipSol], ['sombra', t.filtroSombra, chipSombra]] as const).map(([e, txt, n]) => (
             <button key={e} type="button" className="app__chip" data-e={e} aria-pressed={filtro[e]}
               onClick={() => setFiltro({ ...filtro, [e]: !filtro[e] })}>{txt} <b>{n}</b></button>
           ))}
@@ -115,7 +142,16 @@ export default function App() {
 
       {/* Escritorio: una columna flotante (buscador + hora/resumen, o ficha). En móvil los wrappers son `display: contents` y buscador, filtros, cabecera y barra de hora flotan sobre el mapa. */}
       <div className="app__panel">
-        <Buscador terrazas={TERRAZAS} estados={est} idioma={idioma} onElegir={elegirDeBuscador} inert={nivelFicha === 2} />
+        <Buscador terrazas={TERRAZAS} barrios={BARRIOS} estados={est} idioma={idioma} onElegir={elegirDeBuscador} onElegirBarrio={elegirBarrio} inert={nivelFicha === 2} />
+        {barrio && (
+          <div className="app__barrio" inert={nivelFicha === 2}>
+            <button type="button" className="app__barrio-b" aria-label={t.barrioQuitar(barrio.nombre)} onClick={quitarBarrio}>
+              <span className="app__barrio-t">{t.barrio} <b>{barrio.nombre}</b></span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" /></svg>
+            </button>
+            <p className="bus__sr" role="status">{visibles.length ? '' : t.barrioSinElegir}</p>
+          </div>
+        )}
         <div className="app__cuerpo">
           {!(escritorio && terraza) && <SelectorHora fecha={fecha} onChange={setFecha} histograma={histograma} alSol={alSol} total={TERRAZAS.length} idioma={idioma} compacto={!escritorio} inert={nivelFicha >= 1} />}
 

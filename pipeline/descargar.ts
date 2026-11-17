@@ -6,6 +6,7 @@ import { join } from 'node:path';
 export const RAW = fileURLToPath(new URL('./raw/', import.meta.url));
 export const GML = 'A.ES.SDGC.BU.29900.buildingpart.gml';
 const TERRAZAS = 'https://datosabiertos.malaga.eu/recursos/comercio/establecimientos/da_ovpMesasPlanos-4326.geojson';
+const BARRIOS = 'https://datosabiertos.malaga.eu/recursos/urbanismoEInfraestructura/planimetria/callejero/da_cartografiaBarrio-4326.geojson';
 const EDIFICIOS = 'https://www.catastro.hacienda.gob.es/INSPIRE/Buildings/29/29900-MALAGA/A.ES.SDGC.BU.29900.zip';
 
 type Dependencias = {
@@ -48,6 +49,7 @@ export async function descargar(
   }
 
   await bajar(TERRAZAS, join(raw, 'terrazas.geojson'));
+  await bajar(BARRIOS, join(raw, 'barrios.geojson'));
   if (extraer) {
     await bajar(EDIFICIOS, join(raw, 'edificios.zip'));
     ejecutar('unzip', ['-o', join(raw, 'edificios.zip'), '-d', raw]);

@@ -36,6 +36,29 @@ Transformaciones efectuadas por Sol y Sombra:
   al local y cálculo del perfil de horizonte: 180 ángulos de elevación en pasos de 2° a partir
   de obstáculos catastrales próximos. No es una medición de campo de la terraza.
 
+## Ayuntamiento de Málaga: barrios
+
+Fuente: Ayuntamiento de Málaga, «Sistema de Información Cartográfica - Barrio»
+([ficha](https://datosabiertos.malaga.eu/dataset/sistema-de-informacion-cartografica-barrio),
+[recurso GeoJSON EPSG 4326](https://datosabiertos.malaga.eu/recursos/urbanismoEInfraestructura/planimetria/callejero/da_cartografiaBarrio-4326.geojson)).
+Copia local: `pipeline/raw/barrios.geojson` (ignorado por Git, no se redistribuye), descargada el **2026-11-17**
+(mtime 10:23 +01:00; mismo aviso que arriba sobre el mtime).
+
+Misma contradicción de licencia, comprobada el 17-11-2026: la ficha y `license_title` de la
+[API del catálogo](https://datosabiertos.malaga.eu/api/3/action/package_show?id=sistema-de-informacion-cartografica-barrio)
+dicen **CC BY 4.0**, pero `license_id` es `by-sa-40` y `license_url` apunta a
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Se aplica el mismo criterio conservador:
+**`src/data/barrios.json` se distribuye como adaptación bajo CC BY-SA 4.0**, con crédito al Ayuntamiento,
+enlace a la fuente y a la licencia, indicación de los cambios y sin sugerir respaldo municipal.
+
+Transformaciones efectuadas por Sol y Sombra (`pipeline/barrios.ts`):
+
+- Selección de identificador (`ID_BARRIO`) y nombre (`NOMBARRIO`, sin los espacios de relleno); omisión de código y nombre «común».
+- Eliminación de la tercera coordenada (cota) y simplificación de los polígonos (Douglas-Peucker, tolerancia 5 m;
+  coordenadas a 5 decimales ≈ 1 m). **Los límites resultantes son aproximados, no cartografía oficial.**
+- Asignación de cada terraza a su barrio por punto en polígono sobre la geometría original, y lista de identificadores de terrazas por barrio.
+- Se descartan los barrios sin ninguna terraza (173 de 419 se conservan).
+
 ## Dirección General del Catastro: edificios INSPIRE
 
 Fuente: Dirección General del Catastro, conjunto INSPIRE Buildings del municipio de Málaga

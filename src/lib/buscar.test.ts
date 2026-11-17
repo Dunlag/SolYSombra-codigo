@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buscar, normalizar } from './buscar.ts';
+import { buscar, buscarBarrios, buscarTodo, normalizar, type Barrio } from './buscar.ts';
 import type { Terraza } from './terrazas.ts';
 
 const t = (id: string, nombre: string, direccion = 'CALLE X'): Terraza =>
@@ -17,3 +17,18 @@ test('menos de 2 caracteres o sin coincidencia: vacío', () => {
   assert.deepEqual(buscar(T, 'zzz'), []);
 });
 test('respeta el máximo', () => assert.equal(buscar(T, 'ca', 2).length, 2));
+
+const b = (nombre: string, n = 1): Barrio => ({ id: nombre, nombre, bbox: [0, 0, 1, 1], geometria: { type: 'Polygon', coordinates: [] }, terrazas: Array(n).fill('x') });
+const B = [b('LA MALAGUETA'), b('EL PALO'), b('PLAYAS DEL PALO'), b('CIUDAD JARDÍN')];
+
+test('barrios: insensible a acentos, exacto antes que prefijo antes que contiene', () => {
+  assert.deepEqual(buscarBarrios(B, 'ciudad jardin'), [3]);
+  assert.deepEqual(buscarBarrios(B, 'palo'), [1, 2]); // 'playas del palo' solo lo contiene
+  assert.deepEqual(buscarBarrios([b('LA CA?ADA'), b('OTRO')], 'cañada'), [0]); // '?' comodín
+});
+test('barrio exacto va antes que los locales; el parcial, después', () => {
+  const L = [...T, t('e', 'MALAGUETA BEACH'), t('f', 'PALO SANTO')];
+  assert.deepEqual(buscarTodo(L, B, 'malagueta'), [{ tipo: 'barrio', i: 0 }, { tipo: 'local', i: 4 }]);
+  assert.deepEqual(buscarTodo(L, B, 'palo').map((r) => r.tipo), ['barrio', 'local', 'barrio']);
+  assert.deepEqual(buscarTodo(L, B, 'p'), []);
+});

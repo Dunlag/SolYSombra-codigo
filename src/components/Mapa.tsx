@@ -1,11 +1,12 @@
 // Isla React del mapa (pantalla A). Se monta con client:only="react": maplibre-gl usa
 // window/WebGL al importarse y fallaría al prerenderizar en el servidor.
 import { useEffect, useRef, useState } from 'react';
-import { Map as MapaGL, NavigationControl, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
+import { Map as MapaGL, NavigationControl, setWorkerUrl, type FilterSpecification, type GeoJSONSource } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './Mapa.css';
 import { useT, type Idioma } from '../i18n';
+import type { Barrio } from '../lib/buscar.ts';
 import { aGeoJSON, type Estado, type Terraza } from '../lib/terrazas.ts';
 
 export type Tema = 'wave' | 'lotus';
@@ -21,6 +22,12 @@ type Props = {
   visibles: Estado[] | null;
   /** Pide volar a una terraza; `k` distinto fuerza repetir el vuelo al mismo punto. */
   volarA: { lon: number; lat: number; k: number } | null;
+  /** Geometría del barrio activo (se dibuja contorno + relleno suave) o null. */
+  barrio: Barrio['geometria'] | null;
+  /** Ids de las terrazas del barrio activo: solo esas se ven (null = sin barrio). */
+  soloIds: string[] | null;
+  /** Pide encuadrar un bbox [minLon,minLat,maxLon,maxLat]; `padding` reserva la columna/barras flotantes. */
+  encuadre: { bbox: [number, number, number, number]; k: number; padding: { top: number; bottom: number; left: number; right: number } } | null;
 };
 
 // Vite (dev) preempaqueta maplibre en .vite/deps y allí no existe el worker (504 → mapa en blanco):
@@ -33,6 +40,9 @@ const ESTADOS: Estado[] = ['sol', 'sombra', 'noche'];
 const FUENTE = 'terrazas', CAPA = 'terrazas-iconos', CAPA_SEL = 'terrazas-seleccion';
 // Anillo de selección: el naranja no llega a 3:1 sobre el mapa claro (positron #e8e8e8), así que Lotus usa tinta.
 const COLOR_SEL: Record<Tema, string> = { wave: '#FF9E3B', lotus: '#1F1F28' };
+// Barrio demarcado: tinta --ss-noche de cada tema (maplibre pide colores literales, como COLOR_SEL).
+const COLOR_BARRIO: Record<Tema, string> = { wave: '#957FB8', lotus: '#43436C' };
+const FUENTE_B = 'barrio', CAPA_B_RELLENO = 'barrio-relleno', CAPA_B_LINEA = 'barrio-linea';
 const TAP = 44; // zona táctil mínima (px): el icono mide ~28, el área de clic se amplía
 
 // Rasteriza el SVG a 2× para que no se vea borroso en pantallas retina (pixelRatio: 2).
@@ -47,7 +57,7 @@ async function cargarIcono(url: string): Promise<ImageBitmap> {
   return createImageBitmap(c);
 }
 
-export default function Mapa({ terrazas, estados, seleccionId, onSelect, tema, idioma, visibles, volarA }: Props) {
+export default function Mapa({ terrazas, estados, seleccionId, onSelect, tema, idioma, visibles, volarA, barrio, soloIds, encuadre }: Props) {
   const t = useT(idioma);
   const div = useRef<HTMLDivElement>(null);
   const mapa = useRef<MapaGL | null>(null);
@@ -83,6 +93,10 @@ export default function Mapa({ terrazas, estados, seleccionId, onSelect, tema, i
     m.on('load', () => {
       cargado = true;
       m.addSource(FUENTE, { type: 'geojson', data: aGeoJSON([], []) });
+      // Barrio activo: por debajo de los marcadores y del anillo de selección.
+      m.addSource(FUENTE_B, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      m.addLayer({ id: CAPA_B_RELLENO, type: 'fill', source: FUENTE_B, paint: { 'fill-color': COLOR_BARRIO.wave, 'fill-opacity': 0.12 } });
+      m.addLayer({ id: CAPA_B_LINEA, type: 'line', source: FUENTE_B, layout: { 'line-join': 'round' }, paint: { 'line-color': COLOR_BARRIO.wave, 'line-width': 3 } });
       // Anillo naranja bajo el icono para la terraza elegida (filtro vacío = ninguna).
       m.addLayer({
         id: CAPA_SEL, type: 'circle', source: FUENTE, filter: ['==', ['get', 'id'], ''],
@@ -148,9 +162,34 @@ export default function Mapa({ terrazas, estados, seleccionId, onSelect, tema, i
   // 4b) Filtro por estado (chips). Si el estilo aún no cargó no hay capa: `listo` lo cubre.
   useEffect(() => {
     const m = mapa.current;
-    if (listo && m) m.setFilter(CAPA, visibles
-      ? ['any', ['in', ['get', 'estado'], ['literal', visibles]], ['==', ['get', 'id'], seleccionId ?? '']] : null);
-  }, [listo, visibles, seleccionId]);
+    if (!listo || !m) return;
+    // estado (chips) Y pertenencia al barrio; la terraza elegida se ve siempre.
+    const elegida: FilterSpecification = ['==', ['get', 'id'], seleccionId ?? ''];
+    const porEstado: FilterSpecification = ['in', ['get', 'estado'], ['literal', visibles ?? []]];
+    const porBarrio: FilterSpecification = ['in', ['get', 'id'], ['literal', soloIds ?? []]];
+    m.setFilter(CAPA, !visibles && !soloIds ? null
+      : ['any', ['all', visibles ? porEstado : true, soloIds ? porBarrio : true], elegida]);
+  }, [listo, visibles, soloIds, seleccionId]);
+
+  // 4d) Barrio demarcado: datos, color según el tema.
+  useEffect(() => {
+    const m = mapa.current;
+    if (!listo || !m) return;
+    (m.getSource(FUENTE_B) as GeoJSONSource).setData(barrio
+      ? { type: 'Feature', geometry: barrio, properties: {} } as never : { type: 'FeatureCollection', features: [] });
+  }, [listo, barrio]);
+  useEffect(() => {
+    const m = mapa.current;
+    if (!listo || !m) return;
+    m.setPaintProperty(CAPA_B_RELLENO, 'fill-color', COLOR_BARRIO[tema]);
+    m.setPaintProperty(CAPA_B_LINEA, 'line-color', COLOR_BARRIO[tema]);
+  }, [listo, tema]);
+
+  // 4e) Encuadre del barrio respetando la columna flotante (escritorio) o la barra/tarjeta (móvil).
+  useEffect(() => {
+    if (encuadre) mapa.current?.fitBounds([[encuadre.bbox[0], encuadre.bbox[1]], [encuadre.bbox[2], encuadre.bbox[3]]],
+      { padding: encuadre.padding, maxZoom: 17, duration: 600 });
+  }, [encuadre?.k]);
 
   // 4c) Vuelo a la terraza elegida en el buscador.
   useEffect(() => {
