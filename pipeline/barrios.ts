@@ -29,7 +29,7 @@ export const dentroDeGeometria = (p: Pos, g: Geometria): boolean =>
   poligonos(g).some(([exterior, ...agujeros]) => dentroDeAnillo(p, exterior) && !agujeros.some((a) => dentroDeAnillo(p, a)));
 
 // Metros por grado en Málaga (36.7°N): suficiente para medir tolerancias de unos metros.
-const M_LAT = 110_900, M_LON = 111_320 * Math.cos((36.7 * Math.PI) / 180);
+export const M_LAT = 110_900, M_LON = 111_320 * Math.cos((36.7 * Math.PI) / 180);
 
 /** Douglas-Peucker en metros sobre un anillo cerrado; conserva ≥4 puntos o devuelve null si se degenera. */
 export function simplificarAnillo(anillo: Anillo, tolerancia: number): Anillo | null {

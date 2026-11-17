@@ -11,6 +11,7 @@
     "datos:descargar": "node pipeline/descargar.ts",
     "datos:exportar": "node pipeline/exportar.ts",
     "datos:barrios": "node pipeline/barrios.ts",
+    "datos:zonas": "node pipeline/zonas.ts",
     "horas": "node pipeline/horas.ts"
   },
   "dependencies": {

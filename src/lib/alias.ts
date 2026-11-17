@@ -42,7 +42,12 @@ export type Zona = {
   bbox: Caja; geometrias: Geo[]; terrazas: string[];
   /** Índice en `barrios` si la entrada apunta a un único barrio real: se busca como ese barrio. */
   barrio?: number;
+  /** Ids de los barrios miembros (para que el pipeline una sus polígonos originales). */
+  barrioIds?: string[];
 };
+
+/** Contorno ya unido de una zona (src/data/zonas.json, generado por pipeline/zonas.ts). */
+export type ZonaUnida = { id: string; geometria: Geo; bbox: Caja };
 
 export const nombreZona = (z: Pick<Zona, 'nombre' | 'nombreEn'>, idioma: string) => (idioma === 'en' ? z.nombreEn : z.nombre);
 
@@ -51,7 +56,7 @@ export const aZona = (b: Barrio): Zona => ({ id: `b-${b.id}`, nombre: b.nombre, 
 const unir = (a: Caja, b: Caja): Caja => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])];
 
 /** Resuelve las definiciones contra los datos. Nombres de barrio desconocidos se ignoran (alias.test.ts los vigila); sin terrazas: se descarta. */
-export function resolverZonas(defs: ZonaDef[], barrios: Barrio[], terrazas: Terraza[]): Zona[] {
+export function resolverZonas(defs: ZonaDef[], barrios: Barrio[], terrazas: Terraza[], unidas: ZonaUnida[] = []): Zona[] {
   const porNombre = new Map(barrios.map((b, i) => [b.nombre, i]));
   const distritoDe = new Map(terrazas.map((t) => [t.id, t.distrito]));
   // Distrito más frecuente de cada barrio.
@@ -76,10 +81,14 @@ export function resolverZonas(defs: ZonaDef[], barrios: Barrio[], terrazas: Terr
       // Los locales del distrito que caen en un barrio asignado a otro distrito también deben quedar dentro del encuadre.
       if (d.distrito) for (const t of terrazas) if (t.distrito === d.distrito && caja) caja = unir(caja, [t.lon, t.lat, t.lon, t.lat]);
     }
+    // Contorno único y bbox ya recortado (sin islas) de la zona; sin zonas.json se dibujan los barrios por separado.
+    const u = unidas.find((x) => x.id === d.id);
+    if (u) { geometrias = [u.geometria]; caja = u.bbox; }
     if (!ids.length || !caja) continue;
     zonas.push({
       id: d.id, nombre: d.nombre, nombreEn: d.nombreEn ?? d.nombre, alias: d.alias ?? [], bbox: caja, geometrias, terrazas: ids,
       barrio: d.barrios?.length === 1 && idx.length === 1 ? idx[0] : undefined,
+      barrioIds: idx.map((i) => barrios[i].id),
     });
   }
   return zonas;

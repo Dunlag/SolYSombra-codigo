@@ -11,12 +11,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import terrazasJson from '../data/terrazas.json';
 import barriosJson from '../data/barrios.json';
+import zonasJson from '../data/zonas.json';
 import { idiomaDe, useT, type Idioma } from '../i18n';
 import { aFecha, ahora, aISO, MAX, MIN } from '../lib/hora.ts';
 import type { Nivel } from '../lib/ficha.ts';
 import { contarAlSol, estados, type Estado, type Terraza } from '../lib/terrazas.ts';
 import { minutosDelDia, textoHora } from '../lib/hora.ts';
-import { ZONAS, aZona, nombreZona, resolverZonas, type Zona } from '../lib/alias.ts';
+import { ZONAS, aZona, nombreZona, resolverZonas, type Zona, type ZonaUnida } from '../lib/alias.ts';
 import type { Barrio } from '../lib/buscar.ts';
 import { textosFicha } from '../i18n/ficha';
 import Buscador from './Buscador';
@@ -28,7 +29,7 @@ import { useTema } from './useTema';
 
 const TERRAZAS = terrazasJson as Terraza[];
 const BARRIOS = barriosJson as Barrio[];
-const ZONAS_R = resolverZonas(ZONAS, BARRIOS, TERRAZAS);
+const ZONAS_R = resolverZonas(ZONAS, BARRIOS, TERRAZAS, zonasJson as ZonaUnida[]);
 const CLAVE_IDIOMA = 'ss-idioma';
 
 // Histograma: 28 barras de 30 min entre 08:00 y 22:00, muestreadas en el centro de cada tramo.

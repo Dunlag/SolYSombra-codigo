@@ -59,6 +59,16 @@ Transformaciones efectuadas por Sol y Sombra (`pipeline/barrios.ts`):
 - Asignación de cada terraza a su barrio por punto en polígono sobre la geometría original, y lista de identificadores de terrazas por barrio.
 - Se descartan los barrios sin ninguna terraza (173 de 419 se conservan).
 
+Zonas compuestas (`pipeline/zonas.ts` → `src/data/zonas.json`, también adaptación bajo CC BY-SA 4.0):
+
+- Disolución (unión) de los polígonos municipales ORIGINALES, sin simplificar, de los barrios que forman cada zona
+  (varios barrios o, en los distritos, los barrios cuyo distrito más frecuente entre sus terrazas es ese): se eliminan
+  las aristas compartidas y queda un único contorno exterior, con los agujeros legítimos y las partes inconexas.
+- Se descartan anillos o partes de menos de 50 m² y, en los distritos, las islas pequeñas (<10 % del área mayor)
+  a más de 300 m del resto. Después se simplifica el resultado (Douglas-Peucker, 5 m, 5 decimales).
+- **Los contornos de zona son aproximados**: no son los límites oficiales de los distritos municipales, y el «Soho»
+  es un rectángulo informal fijado a mano.
+
 ## Dirección General del Catastro: edificios INSPIRE
 
 Fuente: Dirección General del Catastro, conjunto INSPIRE Buildings del municipio de Málaga
