@@ -3,7 +3,6 @@ export type Edificio = { anillo: Punto[]; altura: number };
 
 export const FRANJAS = 180;
 export const RADIO = 150;
-const SEPARACION = 3; // metros entre la fachada y el punto donde se mide
 
 export function dentro(p: Punto, anillo: Punto[]): boolean {
   let d = false;
@@ -25,10 +24,22 @@ function distRayo(p: Punto, dir: Punto, a: Punto, b: Punto): number {
   return t > 0 && u >= 0 && u <= 1 ? t : Infinity;
 }
 
-export function horizonte(p: Punto, edificios: Edificio[]): number[] {
+export function convergencia(lat: number, lon: number): number {
+  // TM esférica (https://proj.org/en/stable/operations/projections/tmerc.html): gamma = atan(tan(lambda-lambda0) * sin(phi)), lambda0 = -3°.
+  // Se usa la latitud geodésica: frente a TM elipsoidal GRS80 (EPSG:25830),
+  // el error en Málaga es < 0,00001°, despreciable ante franjas de 2° y alturas enteras.
+  // La corrección elipsoidal omitida empieza en O(e² * (lambda-lambda0)³).
+  // Al oeste del meridiano central gamma < 0: norte de cuadrícula al oeste del verdadero.
+  const rad = Math.PI / 180;
+  return Math.atan(Math.tan((lon + 3) * rad) * Math.sin(lat * rad)) / rad;
+}
+
+export function horizonte(p: Punto, edificios: Edificio[], gamma = 0): number[] {
   const h = new Array<number>(FRANJAS).fill(0);
   for (let i = 0; i < FRANJAS; i++) {
-    const az = (((i + 0.5) * 360) / FRANJAS) * (Math.PI / 180);
+    // Azimut verdadero = azimut de cuadrícula + gamma; rotamos el rayo,
+    // conservando centros (i + 0,5) * 2° e índices desde el norte verdadero.
+    const az = (((i + 0.5) * 360) / FRANJAS - gamma) * (Math.PI / 180);
     const dir: Punto = [Math.sin(az), Math.cos(az)];
     for (const e of edificios) {
       for (let k = 0; k < e.anillo.length; k++) {
@@ -47,7 +58,9 @@ function masCercano(p: Punto, a: Punto, b: Punto): Punto {
 }
 
 // El punto municipal suele caer dentro del local o sobre la fachada: lo sacamos a la calle.
-export function puntoMuestreo(p: Punto, edificios: Edificio[]): Punto {
+export function puntoMuestreo(p: Punto, edificios: Edificio[], separacion = 3): Punto {
+  // Rechazar distancias inválidas evita muestrear dentro de la fachada por un error de configuración.
+  if (!Number.isFinite(separacion) || separacion <= 0) throw new Error('La separación debe ser un número mayor que 0.');
   const libre = (q: Punto) => !edificios.some((e) => dentro(q, e.anillo));
   const estaDentro = !libre(p);
   const bordes: { d: number; q: Punto }[] = [];
@@ -58,13 +71,13 @@ export function puntoMuestreo(p: Punto, edificios: Edificio[]): Punto {
     }
   }
   bordes.sort((a, b) => a.d - b.d);
-  if (!estaDentro && (bordes.length === 0 || bordes[0].d >= SEPARACION)) return p;
+  if (!estaDentro && (bordes.length === 0 || bordes[0].d >= separacion)) return p;
   const s = estaDentro ? 1 : -1; // dentro: cruzar la fachada; fuera: alejarse de ella
   for (const { d, q } of bordes) {
     if (d === 0) continue;
     const r: Punto = [
-      q[0] + ((q[0] - p[0]) / d) * s * SEPARACION,
-      q[1] + ((q[1] - p[1]) / d) * s * SEPARACION,
+      q[0] + ((q[0] - p[0]) / d) * s * separacion,
+      q[1] + ((q[1] - p[1]) / d) * s * separacion,
     ];
     if (libre(r)) return r;
   }
