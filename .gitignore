@@ -3,3 +3,9 @@ pipeline/raw/
 dist/
 .astro/
 .superpowers/
+.env
+.env.*
+!.env.example
+.claude/
+.codex/
+*.log
