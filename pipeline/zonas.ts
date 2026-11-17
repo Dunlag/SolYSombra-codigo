@@ -110,6 +110,8 @@ export function construirZonas(
       partes = r.quedan;
       descartadas[d.id] = r.fuera.length;
     }
+    // Se rellenan los agujeros: son barrios sin locales (o enclaves), y dibujarlos queda como líneas interiores raras.
+    partes = partes.map((p) => [p[0]]);
     const final = simplificar(partes, tolerancia);
     if (!final.length) continue;
     const cajas = final.map(cajaDe);
