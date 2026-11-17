@@ -53,7 +53,7 @@ export default function App() {
   const t = useT(idioma);
   const dialogo = useRef<HTMLDialogElement>(null);
   const [nivelFicha, setNivelFicha] = useState<Nivel>(0);
-  // Chips-filtro (escritorio): ambos apagados = todos los estados.
+  // Chips-filtro (escritorio): por defecto ambos apagados = mapa sin terrazas; el usuario elige qué ver.
   const [filtro, setFiltro] = useState({ sol: false, sombra: false });
   const [volarA, setVolarA] = useState<{ lon: number; lat: number; k: number } | null>(null);
 
@@ -71,9 +71,9 @@ export default function App() {
   const tf = textosFicha(idioma), tituloResumen = t.resumenA(textoHora(minutosDelDia(fecha)));
   const nSombra = useMemo(() => est.filter((e) => e === 'sombra').length, [est]);
   const visibles = useMemo(() => {
-    const v = (['sol', 'sombra'] as const).filter((e) => filtro[e]);
-    return v.length ? v : null;
-  }, [filtro]);
+    // En móvil aún no hay chips: se muestran todas (null). En escritorio, solo las elegidas ([] = ninguna).
+    return escritorio ? (['sol', 'sombra'] as const).filter((e) => filtro[e]) : null;
+  }, [filtro, escritorio]);
   const elegirDeBuscador = (i: number) => {
     const x = TERRAZAS[i];
     setSeleccionId(x.id);

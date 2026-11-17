@@ -17,7 +17,7 @@ type Props = {
   onSelect: (id: string | null) => void;
   tema: Tema;
   idioma: Idioma;
-  /** Estados visibles (chips-filtro); null = todos. */
+  /** Estados visibles (chips-filtro); null = todos, [] = ninguno (la terraza elegida siempre se ve). */
   visibles: Estado[] | null;
   /** Pide volar a una terraza; `k` distinto fuerza repetir el vuelo al mismo punto. */
   volarA: { lon: number; lat: number; k: number } | null;
@@ -148,8 +148,9 @@ export default function Mapa({ terrazas, estados, seleccionId, onSelect, tema, i
   // 4b) Filtro por estado (chips). Si el estilo aún no cargó no hay capa: `listo` lo cubre.
   useEffect(() => {
     const m = mapa.current;
-    if (listo && m) m.setFilter(CAPA, visibles ? ['in', ['get', 'estado'], ['literal', visibles]] : null);
-  }, [listo, visibles]);
+    if (listo && m) m.setFilter(CAPA, visibles
+      ? ['any', ['in', ['get', 'estado'], ['literal', visibles]], ['==', ['get', 'id'], seleccionId ?? '']] : null);
+  }, [listo, visibles, seleccionId]);
 
   // 4c) Vuelo a la terraza elegida en el buscador.
   useEffect(() => {
