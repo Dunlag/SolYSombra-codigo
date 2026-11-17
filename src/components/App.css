@@ -162,11 +162,12 @@
 .app__eclipse-a { margin-top: 2px; font: 500 12px/1.2 var(--ss-font-mono); color: var(--ss-texto-2); }
 .ficha__eclipse { margin: var(--ss-space-2) 0 0; font: italic 15px/1.2 var(--ss-font-label); }
 @media (max-width: 1023.98px) {
+  /* Arriba a la izquierda, bajo la píldora "prototipo" (y la del barrio si hay) y junto a la columna de chips: no toca la barra de hora, la ficha en reposo ni el zoom. */
   .app__eclipse {
-    left: var(--ss-space-2); right: var(--ss-space-2);
-    bottom: calc(var(--app-barra) + 2 * var(--ss-space-2) + 26px + env(safe-area-inset-bottom, 0px));
+    left: var(--ss-space-2); right: calc(176px + 2 * var(--ss-space-2));
+    top: calc(52px + 3 * var(--ss-space-2) + 32px);
   }
-  .app[data-ficha][data-nivel="0"] .app__eclipse { bottom: calc(var(--ss-panel-reposo) + 2 * var(--ss-space-2) + 26px + env(safe-area-inset-bottom, 0px)); }
+  .app[data-barrio] .app__eclipse { top: calc(52px + 4 * var(--ss-space-2) + var(--ss-tap) + 32px + var(--ss-space-2)); }
   .app[data-ficha]:not([data-nivel="0"]) .app__eclipse { visibility: hidden; }
 }
 @media (min-width: 1024px) {
