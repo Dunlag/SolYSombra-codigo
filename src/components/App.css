@@ -1,15 +1,7 @@
 /* Maquetación de la pantalla A (V2-A): tiles en columna con hueco de 8px. Solo tokens --ss-*. */
 .app {
-  box-sizing: border-box; height: 100dvh; display: flex; flex-direction: column; gap: var(--ss-space-2);
-  padding: var(--ss-space-2); padding-bottom: calc(var(--ss-space-2) + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box; height: 100dvh; position: relative; overflow: hidden;
   background: var(--ss-hueco); color: var(--ss-texto); font-family: var(--ss-font-num);
-  max-width: 640px; margin-inline: auto;
-}
-/* La ficha (position:fixed, 200px en reposo) taparía el selector: mientras hay ficha se reserva su
-   hueco debajo del selector, y el mapa (flex:1) cede esa altura. Si el usuario expande la ficha, la
-   tapa a propósito. */
-.app[data-ficha] {
-  padding-bottom: calc(var(--ss-space-2) + var(--ss-panel-reposo) + var(--ss-space-2) + env(safe-area-inset-bottom, 0px));
 }
 .app__tile { background: var(--ss-tile); border: var(--ss-borde-w) solid var(--ss-borde); border-radius: var(--ss-radio); box-sizing: border-box; }
 .app__cabecera { display: flex; align-items: center; gap: 10px; height: 52px; padding: 4px 4px 4px 12px; flex-shrink: 0; }
@@ -20,10 +12,9 @@
   border-radius: 12px; border: var(--ss-borde-w) solid var(--ss-texto); background: transparent;
   font-family: var(--ss-font-mono); font-size: 13px; font-weight: 600;
 }
-/* Contenedor del mapa: flex:1 + min-height:0 para que ceda altura; el min-height de Mapa.css (320px)
-   se anula aquí porque con la ficha abierta el mapa tiene que poder encogerse. */
-.app__mapa { position: relative; flex: 1 1 auto; min-height: 0; }
-.app__mapa .ss-mapa { min-height: 0; }
+/* Mapa a pantalla completa; todo lo demás flota encima. */
+.app__mapa { position: absolute; inset: 0; }
+.app__mapa .ss-mapa { min-height: 0; border: 0; border-radius: 0; }
 .app__rotulo {
   position: absolute; left: 10px; top: 10px; margin: 0; max-width: 210px; padding: 7px 11px; pointer-events: none;
   background: var(--ss-tile); border: var(--ss-borde-w) solid var(--ss-borde); border-radius: 12px;
@@ -43,16 +34,74 @@
 .app__dialogo ul { margin: 0; padding-left: var(--ss-space-5); }
 .app__cerrar { margin-top: var(--ss-space-4); width: 100%; }
 
+/* Chips-filtro (mismo componente en móvil y escritorio; la posición cambia por breakpoint). */
+.app__filtros { position: absolute; z-index: 20; display: flex; gap: var(--ss-space-2); }
+.app__chip {
+  min-height: var(--ss-tap); padding: 0 var(--ss-space-4); display: flex; align-items: center; gap: 6px; cursor: pointer;
+  border-radius: 999px; border: var(--ss-borde-w) solid var(--ss-texto); background: var(--ss-tile); color: var(--ss-texto);
+  font: 600 14px var(--ss-font-body); box-shadow: 0 2px 10px rgb(0 0 0 / .35);
+}
+.app__chip b { font: 800 15px var(--ss-font-num); }
+.app__chip[data-e="sol"][aria-pressed="true"] { background: var(--ss-sol); color: var(--ss-hueco); }
+.app__chip[data-e="sombra"][aria-pressed="true"] { background: var(--ss-sombra); color: var(--ss-hueco); }
+.app__chip:focus-visible { outline: var(--ss-foco-ring); outline-offset: var(--ss-foco-offset); }
+.app__mapa .maplibregl-ctrl-group { border-radius: var(--ss-radio); border: var(--ss-borde-w) solid var(--ss-borde); box-shadow: 0 2px 10px rgb(0 0 0 / .35); }
+.app__mapa .maplibregl-ctrl-group button:focus-visible { outline: var(--ss-foco-ring); outline-offset: -3px; }
+.app__rotulo-l { display: none; }
+
 /* Móvil: los contenedores de la columna flotante no existen como cajas. */
 .app__panel, .app__cuerpo { display: contents; }
+
+/* MÓVIL (<1024px): mapa protagonista. Arriba buscador + idioma + limitaciones; a la derecha, bajo el buscador, los
+   chips; abajo la barra de hora (SelectorHora compacto) o, con terraza elegida, la ficha como bottom sheet. */
+@media (max-width: 1023.98px) {
+  .app {
+    --app-ancho-botones: calc(2 * var(--ss-tap) + 6px);   /* idioma + limitaciones */
+    --app-barra: 80px;                                      /* alto de la barra de hora plegada (SelectorHora.css) */
+  }
+  .app__cabecera {
+    position: absolute; z-index: 20; top: var(--ss-space-2); right: var(--ss-space-2); height: 52px;
+    padding: 0; gap: 6px; background: none; border: 0; border-radius: 0;
+  }
+  .app__cabecera > svg { display: none; } /* solo el logo; el ℹ de limitaciones se queda */
+  /* El h1 sigue en el árbol de accesibilidad pero no se ve: en móvil manda el buscador. */
+  .app__titulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .app__btn { background: var(--ss-tile); box-shadow: 0 2px 10px rgb(0 0 0 / .35); }
+  .app__panel > .bus {
+    position: absolute; z-index: 20; top: var(--ss-space-2); left: var(--ss-space-2);
+    right: calc(2 * var(--ss-space-2) + var(--app-ancho-botones));
+  }
+  /* La lista de resultados ocupa todo el ancho (pasa por encima de los botones de idioma/limitaciones). */
+  .app__panel > .bus .bus__lista { right: calc(-1 * (var(--app-ancho-botones) + var(--ss-space-2))); }
+  .app__filtros { top: calc(52px + 2 * var(--ss-space-2)); right: var(--ss-space-2); flex-direction: column; align-items: flex-end; }
+  /* Icono por CSS (decorativo): círculo = sol, cuadrado redondeado = sombra, como el logo. */
+  .app__chip::before { content: ""; width: 12px; height: 12px; background: currentColor; }
+  .app__chip[data-e="sol"]::before { border-radius: 50%; }
+  .app__chip[data-e="sombra"]::before { border-radius: 3px; }
+  .app__rotulo {
+    top: calc(52px + 2 * var(--ss-space-2)); left: var(--ss-space-2); max-width: 150px; padding: 4px 10px;
+    font-size: 13px; opacity: .92; z-index: 5;
+  }
+  /* Zoom (pellizco sigue valiendo): bajo los chips, sin tapar nada. */
+  .app__mapa .maplibregl-ctrl-top-right { top: calc(52px + 3 * var(--ss-space-2) + 2 * var(--ss-tap) + var(--ss-space-2)); right: var(--ss-space-2); }
+  /* La atribución de OpenStreetMap (obligatoria) sube sobre la barra de hora o la ficha en reposo/media. */
+  .app__mapa .maplibregl-ctrl-bottom-right, .app__mapa .maplibregl-ctrl-bottom-left {
+    margin-bottom: calc(var(--app-barra) + 2 * var(--ss-space-2) + env(safe-area-inset-bottom, 0px));
+  }
+  .app[data-ficha][data-nivel="0"] .maplibregl-ctrl-bottom-right, .app[data-ficha][data-nivel="0"] .maplibregl-ctrl-bottom-left {
+    margin-bottom: calc(var(--ss-panel-reposo) + 2 * var(--ss-space-2) + env(safe-area-inset-bottom, 0px));
+  }
+  .app[data-ficha][data-nivel="1"] .maplibregl-ctrl-bottom-right, .app[data-ficha][data-nivel="1"] .maplibregl-ctrl-bottom-left {
+    margin-bottom: calc(var(--ss-panel-media) + 2 * var(--ss-space-2) + env(safe-area-inset-bottom, 0px));
+  }
+  .app .ficha { box-shadow: 0 2px 10px rgb(0 0 0 / .35); }
+  /* Ficha completa (casi toda la pantalla): lo que flota arriba ya está `inert` y se oculta para no pintarse sobre la ficha. */
+  .app[data-nivel="2"] :is(.app__cabecera, .app__filtros, .app__panel > .bus, .app__rotulo) { visibility: hidden; }
+}
 
 /* ESCRITORIO (mismo breakpoint que useEscritorio.ts): mapa a pantalla completa y UNA columna flotante a la izquierda.
    Móvil intacto: todo lo de aquí solo aplica dentro del @media. */
 @media (min-width: 1024px) {
-  .app { max-width: none; display: block; position: relative; padding: 0; overflow: hidden; }
-  .app[data-ficha] { padding: 0; }
-  .app__mapa { position: absolute; inset: 0; }
-  .app__mapa .ss-mapa { border: 0; border-radius: 0; }
   .app__panel { display: flex; flex-direction: column; gap: var(--ss-space-2); position: absolute; z-index: 10; top: var(--ss-space-4); left: var(--ss-space-4); width: 380px; max-height: calc(100dvh - 2 * var(--ss-space-4)); }
   .app__cuerpo { display: flex; flex-direction: column; gap: var(--ss-space-2); min-height: 0; overflow-y: auto; padding: 3px; margin: -3px; /* hueco para el anillo de foco */ }
   .app__cuerpo > * { flex-shrink: 0; }
@@ -60,22 +109,13 @@
   /* Logo, idioma y limitaciones: píldora flotante arriba a la derecha. */
   .app__cabecera { position: absolute; z-index: 10; top: var(--ss-space-4); right: var(--ss-space-4); height: 52px; padding-right: 4px; box-shadow: 0 2px 10px rgb(0 0 0 / .35); }
   .app__titulo { flex-grow: 0; font-size: 21px; }
-  .app__filtros { position: absolute; z-index: 10; top: 76px; right: var(--ss-space-4); display: flex; gap: var(--ss-space-2); }
-  .app__chip {
-    min-height: var(--ss-tap); padding: 0 var(--ss-space-4); display: flex; align-items: center; gap: 6px; cursor: pointer;
-    border-radius: 999px; border: var(--ss-borde-w) solid var(--ss-texto); background: var(--ss-tile); color: var(--ss-texto);
-    font: 600 14px var(--ss-font-body); box-shadow: 0 2px 10px rgb(0 0 0 / .35);
-  }
-  .app__chip b { font: 800 15px var(--ss-font-num); }
-  .app__chip[data-e="sol"][aria-pressed="true"] { background: var(--ss-sol); color: var(--ss-hueco); }
-  .app__chip[data-e="sombra"][aria-pressed="true"] { background: var(--ss-sombra); color: var(--ss-hueco); }
-  .app__chip:focus-visible { outline: var(--ss-foco-ring); outline-offset: var(--ss-foco-offset); }
+  .app__filtros { top: 76px; right: var(--ss-space-4); }
+  .app__rotulo-c { display: none; }
+  .app__rotulo-l { display: inline; }
   /* Rótulo "prototipo": píldora discreta abajo, a la derecha de la columna. */
   .app__rotulo { left: calc(380px + 2 * var(--ss-space-4)); top: auto; bottom: var(--ss-space-6); max-width: 300px; padding: 4px 10px; font-size: 14px; opacity: .92; }
   /* Zoom de maplibre bajo los chips. */
   .app__mapa .maplibregl-ctrl-top-right { top: 130px; right: var(--ss-space-2); }
-  .app__mapa .maplibregl-ctrl-group { border-radius: var(--ss-radio); border: var(--ss-borde-w) solid var(--ss-borde); box-shadow: 0 2px 10px rgb(0 0 0 / .35); }
-  .app__mapa .maplibregl-ctrl-group button:focus-visible { outline: var(--ss-foco-ring); outline-offset: -3px; }
   .app__resumen { display: flex; flex-direction: column; gap: var(--ss-space-2); padding: var(--ss-space-3); }
   .app__resumen-t { font: italic 17px var(--ss-font-label); }
   .app__resumen-cajas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ss-space-2); }

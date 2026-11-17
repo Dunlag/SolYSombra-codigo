@@ -17,17 +17,22 @@ type Props = {
   alSol: number;
   total: number;
   idioma: Idioma;
+  /** Móvil: barra baja de una fila; chips y fecha en un panel que se expande hacia arriba. */
+  compacto?: boolean;
   /** App lo activa cuando la ficha lo tapa (WCAG 2.4.11). */
   inert?: boolean;
 };
 
 const ALTO = 64;                 // px del histograma
+const ALTO_COMPACTO = 30;
 const THUMB = 44;                // zona táctil del thumb (px); las barras se alinean a su recorrido
 const MARCAS = [8, 11, 14, 17, 20, 22];
 const frac = (min: number) => (min - MIN) / (MAX - MIN);
 
-export default function SelectorHora({ fecha, onChange, histograma, alSol, total, idioma, inert }: Props) {
+export default function SelectorHora({ fecha, onChange, histograma, alSol, total, idioma, compacto, inert }: Props) {
   const t = useT(idioma);
+  const [abierto, setAbierto] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
   const th = idioma === 'en' ? hEn : hEs;
   // El reloj va en estado para que "Ahora" se actualice solo cada minuto.
   const [reloj, setReloj] = useState(() => new Date());
@@ -85,28 +90,29 @@ export default function SelectorHora({ fecha, onChange, histograma, alSol, total
     { clave: 'manana', texto: t.manana, destino: rel === 'manana' ? f : manana(f), activo: rel === 'manana' },
   ];
 
-  return (
-    <section className="sh" aria-label={t.hora} inert={inert}>
-      <div className="sh-cabecera">
+  const alto = compacto ? ALTO_COMPACTO : ALTO;
+  // Esc pliega el panel; el foco pasa al botón (si no, se perdería en un chip ya oculto).
+  const alEscape = (e: React.KeyboardEvent) => {
+    if (compacto && abierto && e.key === 'Escape') { e.stopPropagation(); setAbierto(false); toggle.current?.focus(); }
+  };
+
+  const horaCol = (
         <div className="sh-hora-col">
           <span className="sh-rel">{relTxt} {etiquetaFecha(f, idioma)}</span>
           {/* Con el foco en el slider el <output> se calla (si no, doble anuncio con valuetext); con chips/fecha anuncia. */}
           <output htmlFor="sh-rango" aria-live={enRango ? 'off' : 'polite'} className="sh-hora">{hora}</output>
         </div>
-        <div className="sh-cuenta">
-          <span className="sh-cuenta-n">{alSol}</span>
-          <span className="sh-cuenta-t">{t.terrazasAlSol}<br />{t.de} {total}</span>
-        </div>
-      </div>
+  );
 
+  const escala = (
       <div className="sh-escala" style={{ ['--pos' as string]: frac(min) }}>
-        <div className="sh-barras" aria-hidden="true" style={{ height: ALTO }}>
+        <div className="sh-barras" aria-hidden="true" style={{ height: alto }}>
           {barras.map((v, i) => (
             // Altura = nº de terrazas; las barras sin sol son un tocón corto y gris (forma + color).
             <span
               key={i}
               className={`sh-barra${v === 0 ? ' sh-barra-0' : ''}${i === idxSel ? ' sh-barra-sel' : ''}`}
-              style={{ height: Math.max(6, Math.round(v * (ALTO - 4))) }}
+              style={{ height: Math.max(6, Math.round(v * (alto - 4))) }}
             />
           ))}
         </div>
@@ -121,13 +127,17 @@ export default function SelectorHora({ fecha, onChange, histograma, alSol, total
           onKeyDown={alTeclear}
           onFocus={() => setEnRango(true)} onBlur={() => setEnRango(false)}
         />
-        <div className="sh-marcas" aria-hidden="true">
-          {MARCAS.map((h) => (
-            <span key={h} style={{ ['--p' as string]: frac(h * 60) }}>{String(h).padStart(2, '0')}</span>
-          ))}
-        </div>
+        {!compacto && (
+          <div className="sh-marcas" aria-hidden="true">
+            {MARCAS.map((h) => (
+              <span key={h} style={{ ['--p' as string]: frac(h * 60) }}>{String(h).padStart(2, '0')}</span>
+            ))}
+          </div>
+        )}
       </div>
+  );
 
+  const chipsYFecha = (
       <div className="sh-chips">
         {chips.map((c) => (
           <button
@@ -143,6 +153,36 @@ export default function SelectorHora({ fecha, onChange, histograma, alSol, total
           />
         </label>
       </div>
+  );
+
+  return (
+    <section className={`sh${compacto ? ' sh--c' : ''}`} aria-label={t.hora} inert={inert} onKeyDown={alEscape}>
+      {compacto ? (
+        <>
+          {/* El panel va ANTES de la fila: se despliega hacia arriba y el orden de foco sigue el visual. */}
+          <div id="sh-extra" className="sh-extra" hidden={!abierto}>{chipsYFecha}</div>
+          <div className="sh-fila">
+            {horaCol}
+            {escala}
+            <button ref={toggle} type="button" className="sh-toggle" aria-expanded={abierto} aria-controls="sh-extra"
+              aria-label={abierto ? t.horaMenos : t.horaMas} onClick={() => setAbierto(!abierto)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true"><polyline points="5,15 12,8 19,15" /></svg>
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="sh-cabecera">
+            {horaCol}
+            <div className="sh-cuenta">
+              <span className="sh-cuenta-n">{alSol}</span>
+              <span className="sh-cuenta-t">{t.terrazasAlSol}<br />{t.de} {total}</span>
+            </div>
+          </div>
+          {escala}
+          {chipsYFecha}
+        </>
+      )}
     </section>
   );
 }

@@ -35,6 +35,8 @@ export const es = {
   tarde: 'Tarde',
   manana: 'Mañana',
   hora: 'Hora',
+  horaMas: 'Más opciones de hora',
+  horaMenos: 'Ocultar opciones de hora',
   terrazasAlSol: 'terrazas al sol',
   de: 'de',
   relAhora: '(ahora)',

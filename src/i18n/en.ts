@@ -34,6 +34,8 @@ export const en: Textos = {
   tarde: 'Afternoon',
   manana: 'Tomorrow',
   hora: 'Time',
+  horaMas: 'More time options',
+  horaMenos: 'Hide time options',
   terrazasAlSol: 'terraces in the sun',
   de: 'of',
   relAhora: '(now)',

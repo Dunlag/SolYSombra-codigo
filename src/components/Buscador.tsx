@@ -7,9 +7,9 @@ import { buscar } from '../lib/buscar.ts';
 import type { Estado, Terraza } from '../lib/terrazas.ts';
 import { useTema } from './useTema';
 
-type Props = { terrazas: Terraza[]; estados: Estado[]; idioma: Idioma; onElegir: (i: number) => void };
+type Props = { terrazas: Terraza[]; estados: Estado[]; idioma: Idioma; onElegir: (i: number) => void; inert?: boolean };
 
-export default function Buscador({ terrazas, estados, idioma, onElegir }: Props) {
+export default function Buscador({ terrazas, estados, idioma, onElegir, inert }: Props) {
   const t = useT(idioma), tf = textosFicha(idioma), tema = useTema();
   const id = useId(), idLista = `${id}-l`;
   const [q, setQ] = useState('');
@@ -27,7 +27,7 @@ export default function Buscador({ terrazas, estados, idioma, onElegir }: Props)
   };
 
   return (
-    <div className="bus">
+    <div className="bus" inert={inert}>
       <input className="bus__in" type="search" role="combobox" aria-expanded={visible} aria-controls={idLista}
         aria-autocomplete="list" aria-label={t.buscar} placeholder={t.buscar} autoComplete="off" spellCheck={false}
         aria-activedescendant={visible && res.length ? `${id}-${activo}` : undefined}

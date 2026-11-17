@@ -53,7 +53,7 @@ export default function App() {
   const t = useT(idioma);
   const dialogo = useRef<HTMLDialogElement>(null);
   const [nivelFicha, setNivelFicha] = useState<Nivel>(0);
-  // Chips-filtro (escritorio): por defecto ambos apagados = mapa sin terrazas; el usuario elige qué ver.
+  // Chips-filtro: por defecto ambos apagados = mapa sin terrazas; el usuario elige qué ver.
   const [filtro, setFiltro] = useState({ sol: false, sombra: false });
   const [volarA, setVolarA] = useState<{ lon: number; lat: number; k: number } | null>(null);
 
@@ -70,10 +70,8 @@ export default function App() {
   const alSol = useMemo(() => est.filter((e) => e === 'sol').length, [est]);
   const tf = textosFicha(idioma), tituloResumen = t.resumenA(textoHora(minutosDelDia(fecha)));
   const nSombra = useMemo(() => est.filter((e) => e === 'sombra').length, [est]);
-  const visibles = useMemo(() => {
-    // En móvil aún no hay chips: se muestran todas (null). En escritorio, solo las elegidas ([] = ninguna).
-    return escritorio ? (['sol', 'sombra'] as const).filter((e) => filtro[e]) : null;
-  }, [filtro, escritorio]);
+  // Solo las elegidas ([] = ninguna), en escritorio y en móvil.
+  const visibles = useMemo(() => (['sol', 'sombra'] as const).filter((e) => filtro[e]), [filtro]);
   const elegirDeBuscador = (i: number) => {
     const x = TERRAZAS[i];
     setSeleccionId(x.id);
@@ -82,7 +80,7 @@ export default function App() {
   const terraza = useMemo(() => TERRAZAS.find((x) => x.id === seleccionId) ?? null, [seleccionId]);
 
   return (
-    <main className="app" data-ficha={terraza ? '' : undefined}>
+    <main className="app" data-ficha={terraza ? '' : undefined} data-nivel={terraza ? nivelFicha : undefined}>
       {/* `inert` (WCAG 2.4.11): la ficha en nivel media/completa (position:fixed) taparía el elemento enfocado
           con Tab. Es lo más simple que mantiene el foco visible: lo tapado deja de ser enfocable. La cabecera
           solo queda cubierta en el nivel completo. */}
@@ -104,23 +102,22 @@ export default function App() {
 
       <div className="app__mapa" inert={nivelFicha >= 1}>
         <Mapa terrazas={TERRAZAS} estados={est} seleccionId={seleccionId} onSelect={setSeleccionId} tema={tema} idioma={idioma} visibles={visibles} volarA={volarA} />
-        <p className="app__rotulo">{t.prototipoLargo}</p>
+        {/* Pill discreta: texto corto en móvil, largo en escritorio (CSS). */}
+        <p className="app__rotulo"><span className="app__rotulo-c">{t.prototipo}</span><span className="app__rotulo-l">{t.prototipoLargo}</span></p>
       </div>
 
-      {escritorio && (
-        <div className="app__filtros" role="group" aria-label={t.filtros}>
+      <div className="app__filtros" role="group" aria-label={t.filtros} inert={nivelFicha === 2}>
           {([['sol', t.filtroSol, alSol], ['sombra', t.filtroSombra, nSombra]] as const).map(([e, txt, n]) => (
             <button key={e} type="button" className="app__chip" data-e={e} aria-pressed={filtro[e]}
               onClick={() => setFiltro({ ...filtro, [e]: !filtro[e] })}>{txt} <b>{n}</b></button>
           ))}
-        </div>
-      )}
+      </div>
 
-      {/* Escritorio: una columna flotante (buscador + hora/resumen, o ficha). En móvil los wrappers son `display: contents`. */}
+      {/* Escritorio: una columna flotante (buscador + hora/resumen, o ficha). En móvil los wrappers son `display: contents` y buscador, filtros, cabecera y barra de hora flotan sobre el mapa. */}
       <div className="app__panel">
-        {escritorio && <Buscador terrazas={TERRAZAS} estados={est} idioma={idioma} onElegir={elegirDeBuscador} />}
+        <Buscador terrazas={TERRAZAS} estados={est} idioma={idioma} onElegir={elegirDeBuscador} inert={nivelFicha === 2} />
         <div className="app__cuerpo">
-          {!(escritorio && terraza) && <SelectorHora fecha={fecha} onChange={setFecha} histograma={histograma} alSol={alSol} total={TERRAZAS.length} idioma={idioma} inert={nivelFicha >= 1} />}
+          {!(escritorio && terraza) && <SelectorHora fecha={fecha} onChange={setFecha} histograma={histograma} alSol={alSol} total={TERRAZAS.length} idioma={idioma} compacto={!escritorio} inert={nivelFicha >= 1} />}
 
           {escritorio && !terraza && (
             <section className="app__tile app__resumen" aria-label={tituloResumen}>
