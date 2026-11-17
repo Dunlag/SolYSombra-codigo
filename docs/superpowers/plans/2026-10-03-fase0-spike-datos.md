@@ -1,5 +1,7 @@
 # Fase 0 — Spike de datos: plan de implementación
 
+> **Histórico: fase 0 terminada** en cuanto a implementación del spike y preparación de la hoja de campo. La validación en la calle sigue pendiente. Este documento conserva el plan original; sus casillas y puertas de fase describen aquel momento. El prototipo web avanza en paralelo, identificado como modelo sin validar, pero la publicación general espera a la validación de campo.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Calcular, con datos reales de Málaga, si cada terraza está al sol o a la sombra a una hora dada, y dejar preparada la validación en persona de 5 terrazas.

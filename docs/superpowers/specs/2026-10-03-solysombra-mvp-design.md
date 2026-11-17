@@ -41,7 +41,7 @@ El proyecto es también un ejercicio de aprendizaje con dos objetivos:
 
 | Dato | Fuente | Notas |
 |---|---|---|
-| Terrazas | Ayuntamiento de Málaga, "Ocupación en vía pública de mesas y sillas - Planos" (`da_ovpMesasPlanos-4326.geojson`), CC BY 4.0 | Geometría **punto**. Campos útiles: `nombre_lugar`, `via`, `direccion_actividad`, `numero`, `distrito`, `metros`, `plano` (PDF). Los planos enlazados son de 2026-03. |
+| Terrazas | Ayuntamiento de Málaga, "Ocupación en vía pública de mesas y sillas - Planos" (`da_ovpMesasPlanos-4326.geojson`), criterio conservador CC BY-SA 4.0 | La ficha indica CC BY 4.0, pero su enlace y API apuntan a CC BY-SA 4.0; véase [licencia de datos](../../../DATA_LICENSE.md). Geometría **punto**. Campos útiles: `nombre_lugar`, `via`, `direccion_actividad`, `numero`, `distrito`, `metros`, `plano` (PDF). Los planos enlazados son de 2026-03. |
 | Edificios | Catastro INSPIRE Buildings (ATOM, municipio de Málaga), GML en EPSG:25830 | Huella por parte de edificio y `numberOfFloorsAboveGround`. |
 | Posición del sol | Librería `suncalc` | Cálculo en el navegador. |
 
@@ -82,7 +82,7 @@ más cercana. El spike de la fase 0 decide si esto basta o hay que usar el plano
 - `noche` si la altura del sol es ≤ 0.
 - `sol` si la altura del sol supera `horizonte[azimut]`; si no, `sombra`.
 
-Función pura, la usan el mapa y la generación de páginas. Es la única lógica con test.
+Función pura, la usan el mapa y la generación de páginas. Tiene tests, al igual que el pipeline y otras funciones de la aplicación.
 
 ### 3. Web (`src/`)
 
@@ -112,8 +112,9 @@ Las páginas por terraza y por barrio se diseñan en la fase 2 (SEO), sobre este
 
 - Test de `estaAlSol`: de noche; horizonte despejado a mediodía; horizonte tapado en la dirección
   del sol; mismo horizonte con sol de invierno y de verano.
-- **Validación de campo (puerta de la fase 0):** 5 terrazas conocidas, comparadas en persona a una
-  hora concreta. Con más de 1 fallo de 5 se revisa el modelo antes de construir la web.
+- **Validación de campo (previa a la publicación general):** 5 terrazas conocidas, comparadas en persona a una
+  hora concreta. Con más de 1 fallo de 5 se revisa el modelo antes de publicar para uso general.
+  El prototipo web avanza en paralelo, identificado como modelo sin validar.
 
 ## Fase 0: orden de trabajo
 
