@@ -58,5 +58,11 @@ export const es = {
   distrito: 'DISTRITO',
   abrirEnMapas: 'Abrir en Mapas',
   diaCompleto: 'Día completo',
+  eclipse: {
+    parcial: 'Eclipse en marcha. Hoy el sol va a medias.',
+    total: 'Totalidad: 1 min 49 s de noche en pleno día (10:48:02). Pide otra y aguanta.',
+    fin: 'Se acaba el eclipse. Vuelve el sol.',
+    aviso: 'No mires al Sol sin gafas homologadas.',
+  },
 };
 export type Textos = typeof es;

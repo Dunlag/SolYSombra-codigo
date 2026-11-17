@@ -17,6 +17,11 @@ const es = {
   eligeTerraza: 'Elige una terraza en el mapa',
   lineaDia: 'Día completo, hora a hora',
   leyenda: { sol: 'sol', sombra: 'sombra', noche: 'noche' },
+  eclipse: {
+    parcial: 'El sol está a medias, como tu ronda de cañas.',
+    total: 'Sombra total. Aquí no manda ningún edificio, manda la Luna.',
+    fin: 'Ha vuelto el sol. Guarda las gafas en el cajón.',
+  },
 };
 export type TextosFicha = typeof es;
 const en: TextosFicha = {
@@ -34,5 +39,10 @@ const en: TextosFicha = {
   eligeTerraza: 'Pick a terrace on the map',
   lineaDia: 'Full day, hour by hour',
   leyenda: { sol: 'sun', sombra: 'shade', noche: 'night' },
+  eclipse: {
+    parcial: "The sun's only half in, like your round of drinks.",
+    total: 'Total shade. No building is in charge here: the Moon is.',
+    fin: 'The sun is back. Put the glasses back in the drawer.',
+  },
 };
 export const textosFicha = (i: Idioma): TextosFicha => (i === 'en' ? en : es);

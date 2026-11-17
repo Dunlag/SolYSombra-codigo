@@ -57,4 +57,10 @@ export const en: Textos = {
   abrirEnMapas: 'Open in Maps',
   diaCompleto: 'Full day',
   resumenA: (hora: string) => `(summary at ${hora})`,
+  eclipse: {
+    parcial: "Eclipse under way. The sun's only half in today.",
+    total: 'Totality: 1 min 49 s of night in broad daylight (10:48:02 CEST). Order another and hold on.',
+    fin: "The eclipse is ending. Here comes the sun.",
+    aviso: "Don't look at the Sun without certified eclipse glasses.",
+  },
 };

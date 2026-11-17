@@ -148,3 +148,27 @@
   .app[data-barrio] .app__rotulo { top: calc(52px + 3 * var(--ss-space-2) + var(--ss-tap)); }
   .app[data-nivel="2"] .app__barrio { visibility: hidden; }
 }
+
+/* Banner del eclipse (2-ago-2027). Móvil: sobre la barra de hora y la atribución de OSM, oculto si la ficha pasa de reposo.
+   Escritorio: arriba, entre la columna y la cabecera. Mismos tokens que el resto; el borde cambia en la totalidad (no solo color: el texto lo dice). */
+.app__eclipse {
+  position: absolute; z-index: 15; margin: 0; padding: 6px 12px; box-sizing: border-box; pointer-events: none;
+  background: var(--ss-tile); color: var(--ss-texto); border: var(--ss-borde-w) solid var(--ss-borde); border-radius: 12px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / .35);
+}
+.app__eclipse[data-fase="total"] { border: 3px double var(--ss-noche); }
+.app__eclipse p { margin: 0; }
+.app__eclipse-t { font: 600 14px/1.25 var(--ss-font-body); }
+.app__eclipse-a { margin-top: 2px; font: 500 12px/1.2 var(--ss-font-mono); color: var(--ss-texto-2); }
+.ficha__eclipse { margin: var(--ss-space-2) 0 0; font: italic 15px/1.2 var(--ss-font-label); }
+@media (max-width: 1023.98px) {
+  .app__eclipse {
+    left: var(--ss-space-2); right: var(--ss-space-2);
+    bottom: calc(var(--app-barra) + 2 * var(--ss-space-2) + 26px + env(safe-area-inset-bottom, 0px));
+  }
+  .app[data-ficha][data-nivel="0"] .app__eclipse { bottom: calc(var(--ss-panel-reposo) + 2 * var(--ss-space-2) + 26px + env(safe-area-inset-bottom, 0px)); }
+  .app[data-ficha]:not([data-nivel="0"]) .app__eclipse { visibility: hidden; }
+}
+@media (min-width: 1024px) {
+  .app__eclipse { top: var(--ss-space-4); left: calc(380px + 2 * var(--ss-space-4)); max-width: min(380px, calc(100vw - 380px - 290px - 5 * var(--ss-space-4))); }
+}

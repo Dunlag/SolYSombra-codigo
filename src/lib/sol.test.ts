@@ -27,3 +27,14 @@ test('obstáculo solo al este: sombra por la mañana, sol por la tarde', () => {
   assert.equal(estaAlSol(este, LAT, LON, new Date('2026-06-21T07:00:00Z')), 'sombra');
   assert.equal(estaAlSol(este, LAT, LON, new Date('2026-06-21T17:00:00Z')), 'sol');
 });
+
+test('eclipse 2027-08-02: totalidad = sombra en todas las rutas; el día anterior/posterior no cambia', async () => {
+  const { tramoActual, lineaDia } = await import('./ficha.ts');
+  const t = { horizonte: plano(0), lat: LAT, lon: LON } as Parameters<typeof tramoActual>[0];
+  const total = new Date('2027-08-02T10:45:00+02:00');
+  assert.equal(estaAlSol(plano(0), LAT, LON, total), 'sombra');
+  assert.equal(tramoActual(t, total).estado, 'sombra');
+  assert.equal(tramoActual(t, total).hasta?.toISOString(), '2027-08-02T08:50:00.000Z'); // vuelve el sol a las 10:50
+  assert.equal(lineaDia(t, total)[21], 'sombra'); // franja 10:30-11:00, medida a las 10:45
+  for (const d of ['2027-08-01', '2027-08-03']) assert.equal(estaAlSol(plano(0), LAT, LON, new Date(`${d}T10:48:00+02:00`)), 'sol');
+});

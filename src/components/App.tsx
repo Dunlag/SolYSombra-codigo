@@ -19,6 +19,7 @@ import { contarAlSol, estados, type Estado, type Terraza } from '../lib/terrazas
 import { minutosDelDia, textoHora } from '../lib/hora.ts';
 import { ZONAS, aZona, nombreZona, resolverZonas, type Zona, type ZonaUnida } from '../lib/alias.ts';
 import type { Barrio } from '../lib/buscar.ts';
+import { enEclipse } from '../lib/eclipse.ts';
 import { textosFicha } from '../i18n/ficha';
 import Buscador from './Buscador';
 import Ficha from './Ficha';
@@ -106,6 +107,7 @@ export default function App() {
     setSeleccionId(x.id);
     setVolarA({ lon: x.lon, lat: x.lat, k: Date.now() });
   };
+  const fase = enEclipse(fecha);
   const terraza = useMemo(() => TERRAZAS.find((x) => x.id === seleccionId) ?? null, [seleccionId]);
 
   return (
@@ -136,6 +138,14 @@ export default function App() {
         {/* Pill discreta: texto corto en móvil, largo en escritorio (CSS). */}
         <p className="app__rotulo"><span className="app__rotulo-c">{t.prototipo}</span><span className="app__rotulo-l">{t.prototipoLargo}</span></p>
       </div>
+
+      {/* Easter egg del eclipse: role=status (educado) anuncia el cambio de fase; el aviso de gafas es fijo. */}
+      {fase && (
+        <div className="app__eclipse" data-fase={fase} role="status" inert={nivelFicha === 2}>
+          <p className="app__eclipse-t">{t.eclipse[fase]}</p>
+          <p className="app__eclipse-a">{t.eclipse.aviso}</p>
+        </div>
+      )}
 
       <div className="app__filtros" role="group" aria-label={t.filtros} inert={nivelFicha === 2}>
           {([['sol', t.filtroSol, chipSol], ['sombra', t.filtroSombra, chipSombra]] as const).map(([e, txt, n]) => (

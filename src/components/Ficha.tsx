@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as RPointerEvent, KeyboardEvent as RKeyboardEvent } from 'react';
 import { useT, type Idioma } from '../i18n';
 import { textosFicha } from '../i18n/ficha';
+import { enEclipse } from '../lib/eclipse.ts';
 import { destinoArrastre, enlaceMapas, lineaDia, siguienteNivel, UMBRAL_CIERRE, tramoActual, type DatosFicha, type Nivel } from '../lib/ficha.ts';
 import { minutosDelDia, textoHora } from '../lib/hora.ts';
 import type { Estado } from '../lib/sol.ts';
@@ -145,6 +146,7 @@ export default function Ficha({ terraza, fecha, idioma, onClose, onNivel }: Fich
   const alTeclar = (e: RKeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
 
   const hora = hhmm(fecha);
+  const fase = enEclipse(fecha);
   const parentesis = estado === 'sol' ? t.alSolA(hora) : tf.parentesis[estado](hora);
   const extra = tramo.hasta
     ? `${duracion(tramo.hasta.getTime() - fecha.getTime())} · ${tf.luego[tramo.siguiente!]}`
@@ -178,6 +180,7 @@ export default function Ficha({ terraza, fecha, idioma, onClose, onNivel }: Fich
           <span className="ficha__hasta-hora">{tramo.hasta ? hhmm(tramo.hasta) : '—'}</span>
           <span className="ficha__hasta-extra">{extra}</span>
         </div>
+        {fase && <p className="ficha__eclipse">{tf.eclipse[fase]}</p>}
 
         {nivel >= 1 && (
           <dl className="ficha__datos">
