@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as RPointerEvent, KeyboardEvent as RKeyboardEvent } from 'react';
 import { useT, type Idioma } from '../i18n';
 import { textosFicha } from '../i18n/ficha';
-import { enlaceMapas, lineaDia, nivelMasCercano, siguienteNivel, tramoActual, type DatosFicha, type Nivel } from '../lib/ficha.ts';
+import { destinoArrastre, enlaceMapas, lineaDia, siguienteNivel, UMBRAL_CIERRE, tramoActual, type DatosFicha, type Nivel } from '../lib/ficha.ts';
 import { minutosDelDia, textoHora } from '../lib/hora.ts';
 import type { Estado } from '../lib/sol.ts';
 import { useEscritorio } from './useEscritorio';
@@ -39,7 +39,7 @@ export default function Ficha({ terraza, fecha, idioma, onClose, onNivel }: Fich
   const titulo = useRef<HTMLHeadingElement>(null);
   const idTitulo = useId();
   const opener = useRef<HTMLElement | null>(null); // quién tenía el foco al abrir: se le devuelve al cerrar (WCAG 2.4.3)
-  const arrastre = useRef<{ y0: number; alto0: number; alturas: [number, number, number]; movido: boolean } | null>(null);
+  const arrastre = useRef<{ y0: number; alto0: number; alturas: [number, number, number]; movido: boolean; nivel0: Nivel; dy: number } | null>(null);
   const hizoArrastre = useRef(false);
 
   // Terraza nueva: vuelve a reposo y el foco pasa al título (h2) para que el lector anuncie el nombre y
@@ -68,12 +68,8 @@ export default function Ficha({ terraza, fecha, idioma, onClose, onNivel }: Fich
   const tramo = useMemo(() => (terraza ? tramoActual(terraza, new Date(minuto * 60_000)) : null), [terraza, minuto]);
   const dia = useMemo(() => (terraza && nivel === 2 ? lineaDia(terraza, new Date(minuto * 60_000)) : null), [terraza, nivel, Math.floor(minuto / 1440)]);
 
-  if (!terraza || !tramo) return null;
-  const { estado } = tramo;
-
-  // --- arrastre del asa (pointer events). La alternativa sin arrastre es el clic/Enter en el asa y los botones.
+  // Alturas de reposo/media/completa: variables CSS (calc/dvh) resueltas a px con un elemento sonda.
   const medirAlturas = (): [number, number, number] => {
-    // Las alturas son variables CSS (calc/dvh): se resuelven a px con un elemento sonda.
     const sonda = document.createElement('div');
     sonda.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;width:0';
     document.body.appendChild(sonda);
@@ -81,31 +77,67 @@ export default function Ficha({ terraza, fecha, idioma, onClose, onNivel }: Fich
     sonda.remove();
     return r as [number, number, number];
   };
-  const alPulsar = (e: RPointerEvent<HTMLButtonElement>) => {
-    if (!e.isPrimary || !panel.current) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    arrastre.current = { y0: e.clientY, alto0: panel.current.offsetHeight, alturas: medirAlturas(), movido: false };
+
+  // Arrastre (pointer events) desde cualquier punto de la ficha salvo enlaces/botones (el asa sí cuenta). En nivel
+  // completo el cuerpo hace scroll nativo: ahí no se arrastra (ver el efecto táctil de abajo). Sin arrastre: clic/Enter
+  // en el asa y los botones. Se captura el puntero solo al pasar el umbral, para que un toque siga siendo un clic.
+  const alPulsar = (e: RPointerEvent<HTMLElement>) => {
+    if (escritorio || !e.isPrimary || !panel.current) return;
+    hizoArrastre.current = false; // un arrastre sin click posterior no debe tragarse el siguiente toque
+    const el = e.target as Element;
+    if (el.closest('a, input, button:not(.ficha__asa)')) return;
+    if (nivel === 2 && el.closest('.ficha__cuerpo')) return;
+    arrastre.current = { y0: e.clientY, alto0: panel.current.offsetHeight, alturas: medirAlturas(), movido: false, nivel0: nivel, dy: 0 };
   };
-  const alMover = (e: RPointerEvent<HTMLButtonElement>) => {
+  const alMover = (e: RPointerEvent<HTMLElement>) => {
     const a = arrastre.current;
     if (!a || !panel.current) return;
-    const dy = a.y0 - e.clientY; // hacia arriba = más alto
-    if (!a.movido && Math.abs(dy) < UMBRAL_ARRASTRE) return;
-    a.movido = true;
+    a.dy = a.y0 - e.clientY; // hacia arriba = más alto
+    if (!a.movido && Math.abs(a.dy) < UMBRAL_ARRASTRE) return;
+    if (!a.movido) {
+      a.movido = true;
+      try { panel.current.setPointerCapture(e.pointerId); } catch { /* puntero ya liberado */ }
+    }
     panel.current.dataset.arrastrando = '';
-    panel.current.style.height = `${Math.min(a.alturas[2], Math.max(a.alturas[0], a.alto0 + dy))}px`;
+    // Desde reposo se deja bajar un poco más (feedback del cierre); desde media/completa, no por debajo de reposo.
+    const piso = a.nivel0 === 0 ? a.alturas[0] * 0.7 : a.alturas[0];
+    panel.current.style.height = `${Math.min(a.alturas[2], Math.max(piso, a.alto0 + a.dy))}px`;
   };
-  const alSoltar = (e: RPointerEvent<HTMLButtonElement>) => {
+  const alSoltar = () => {
     const a = arrastre.current;
     arrastre.current = null;
     if (!a || !panel.current) return;
-    if (a.movido) {
-      hizoArrastre.current = true; // el click que sigue al pointerup no debe ciclar además
-      setNivel(nivelMasCercano(parseFloat(panel.current.style.height), a.alturas));
-    }
-    panel.current.style.height = '';
-    delete panel.current.dataset.arrastrando;
+    const alto = parseFloat(panel.current.style.height);
+    const el = panel.current;
+    delete el.dataset.arrastrando;
+    if (!a.movido) { el.style.height = ''; return; }
+    hizoArrastre.current = true; // el click que sigue al pointerup no debe ciclar además
+    const d = destinoArrastre(alto, a.alturas, a.nivel0, a.dy);
+    if (d === 'cerrar') { el.style.height = ''; onClose(); return; }
+    // Se anima desde donde se soltó hasta la altura del nivel; el px en línea se retira cuando manda el CSS del nivel.
+    el.style.height = `${a.alturas[d]}px`;
+    setNivel(d);
+    setTimeout(() => { el.style.height = ''; }, 300);
   };
+
+  // Nivel completo: el cuerpo hace scroll vertical normal (touch-action: pan-y); si está arriba del todo, tirar hacia
+  // abajo baja a media. Hace falta un listener nativo no pasivo para poder cancelar el gesto (React los registra pasivos).
+  useEffect(() => {
+    const c = panel.current?.querySelector<HTMLElement>('.ficha__cuerpo');
+    if (escritorio || nivelEstado !== 2 || !c) return;
+    let y0: number | null = null;
+    const ini = (e: TouchEvent) => { y0 = c.scrollTop <= 0 ? e.touches[0].clientY : null; };
+    const mov = (e: TouchEvent) => { if (y0 !== null && e.touches[0].clientY - y0 > UMBRAL_ARRASTRE && e.cancelable) e.preventDefault(); };
+    const fin = (e: TouchEvent) => { if (y0 !== null && e.changedTouches[0].clientY - y0 > UMBRAL_CIERRE) setNivel(1); y0 = null; };
+    c.addEventListener('touchstart', ini, { passive: true });
+    c.addEventListener('touchmove', mov, { passive: false });
+    c.addEventListener('touchend', fin, { passive: true });
+    return () => { c.removeEventListener('touchstart', ini); c.removeEventListener('touchmove', mov); c.removeEventListener('touchend', fin); };
+  }, [id, nivelEstado, escritorio]);
+
+  if (!terraza || !tramo) return null;
+  const { estado } = tramo;
+
   const alClicAsa = () => {
     if (hizoArrastre.current) { hizoArrastre.current = false; return; }
     setNivel(siguienteNivel(nivel));
@@ -119,9 +151,9 @@ export default function Ficha({ terraza, fecha, idioma, onClose, onNivel }: Fich
     : tf.sinCambios;
 
   return (
-    <section ref={panel} className="ficha" data-nivel={nivel} data-estado={estado} aria-labelledby={idTitulo} onKeyDown={alTeclar}>
-      {!escritorio && <button type="button" className="ficha__asa" aria-label={tf.asa(nivel)}
-        onPointerDown={alPulsar} onPointerMove={alMover} onPointerUp={alSoltar} onPointerCancel={alSoltar} onClick={alClicAsa}>
+    <section ref={panel} className="ficha" data-nivel={nivel} data-estado={estado} aria-labelledby={idTitulo} onKeyDown={alTeclar}
+      onPointerDown={alPulsar} onPointerMove={alMover} onPointerUp={alSoltar} onPointerCancel={alSoltar}>
+      {!escritorio && <button type="button" className="ficha__asa" aria-label={tf.asa(nivel)} onClick={alClicAsa}>
         <span />
       </button>}
 

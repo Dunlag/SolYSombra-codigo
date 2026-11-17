@@ -51,7 +51,7 @@
 .ficha[data-nivel="1"] .ficha__hasta-hora, .ficha[data-nivel="2"] .ficha__hasta-hora { font-size: 96px; }
 .ficha__hasta-extra { font-size: 15px; line-height: 1.3; padding-bottom: 6px; }
 
-.ficha__cuerpo { display: flex; flex-direction: column; gap: var(--ss-space-3); overflow-y: auto; min-height: 0; flex: 1; }
+.ficha__cuerpo { display: flex; flex-direction: column; gap: var(--ss-space-3); overflow-y: auto; overscroll-behavior: contain; min-height: 0; flex: 1; }
 .ficha__datos { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ss-space-3); border-top: var(--ss-borde-w) solid var(--ss-texto); padding-top: var(--ss-space-3); }
 .ficha__datos dt { font-family: var(--ss-font-mono); font-size: 11px; font-weight: 600; }
 .ficha__datos dd { margin: 2px 0 0; font-size: 16px; line-height: 1.3; }
@@ -79,3 +79,14 @@
 .ficha__leyenda [data-e="sombra"] i { height: 7px; --ficha-barra: var(--ss-sombra); }
 .ficha__leyenda [data-e="noche"] i { height: 3px; --ficha-barra: var(--ss-noche); }
 .ficha__barra, .ficha__leyenda i { box-shadow: inset 0 0 0 1.5px var(--ss-texto); }
+
+/* Móvil: zona arrastrable (asa + cabecera, y el cuerpo mientras no es la altura completa) con touch-action: none para que
+   Chrome Android no robe el gesto (scroll del mapa, pull-to-refresh). En altura completa el cuerpo hace scroll vertical nativo. */
+@media (max-width: 1023.98px) {
+  .ficha__cabecera, .ficha[data-nivel="0"] .ficha__cuerpo, .ficha[data-nivel="1"] .ficha__cuerpo { touch-action: none; }
+  .ficha[data-nivel="2"] .ficha__cuerpo { touch-action: pan-y; }
+}
+/* Reposo: el cuerpo no cabe (la acción "Más detalles" quedaría recortada por completo), así que no se muestra ni
+   hace scroll (evita la marquita de scrollbar). Se expande con el asa (clic/Enter) o deslizando. */
+.ficha[data-nivel="0"] .ficha__cuerpo { overflow: hidden; }
+.ficha[data-nivel="0"] .ficha__acciones { display: none; }

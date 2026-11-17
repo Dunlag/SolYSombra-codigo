@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-const { tramoActual, lineaDia, enlaceMapas, siguienteNivel, nivelMasCercano } = await import('./ficha.ts');
+const { tramoActual, lineaDia, enlaceMapas, siguienteNivel, nivelMasCercano, destinoArrastre } = await import('./ficha.ts');
 
 const base = { id: 'x', nombre: 'T', direccion: 'd', distrito: 'c', lat: 36.72, lon: -4.42, metros: 0 };
 const plano = (g: number) => ({ ...base, horizonte: new Array(180).fill(g) });
@@ -78,4 +78,12 @@ test('el resultado no depende de la zona horaria del dispositivo', () => {
   assert.equal(salida('Asia/Tokyo'), madrid);
   assert.equal(salida('America/New_York'), madrid);
   assert.equal(JSON.parse(madrid)[0].hasta, null);
+});
+
+test('destinoArrastre: abajo en reposo cierra; arriba sube; abajo desde media baja', () => {
+  const a: [number, number, number] = [200, 540, 800];
+  assert.equal(destinoArrastre(200, a, 0, -60), 'cerrar');
+  assert.equal(destinoArrastre(200, a, 0, -20), 0);          // por debajo del umbral: sigue en reposo
+  assert.equal(destinoArrastre(500, a, 0, 300), 1);
+  assert.equal(destinoArrastre(210, a, 1, -330), 0);          // desde media no se cierra, baja a reposo
 });

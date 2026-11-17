@@ -55,3 +55,11 @@ export function nivelMasCercano(alto: number, alturas: [number, number, number])
   }
   return mejor;
 }
+
+/** Px de arrastre hacia abajo, desde reposo, a partir de los cuales la ficha se cierra (como Google Maps). */
+export const UMBRAL_CIERRE = 60;
+
+/** Al soltar el asa/cabecera: nivel destino o 'cerrar'. `dy` > 0 = hacia arriba, < 0 = hacia abajo. */
+export function destinoArrastre(alto: number, alturas: [number, number, number], nivel0: Nivel, dy: number): Nivel | 'cerrar' {
+  return nivel0 === 0 && dy <= -UMBRAL_CIERRE ? 'cerrar' : nivelMasCercano(alto, alturas);
+}
