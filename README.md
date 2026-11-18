@@ -4,7 +4,7 @@ Mapa de terrazas de Málaga que indica, para una hora y día concretos, si cada 
 
 > **Prototipo — el modelo está en validación.** Los datos de sol/sombra no se han contrastado todavía en la calle (prueba de campo prevista el 2026-11-28). No los uses para decidir nada importante.
 
-**Demo:** https://dunlag.github.io/SolYSombra-codigo/ (placeholder hasta activar GitHub Pages)
+**Demo:** https://dunlag.github.io/SolYSombra-codigo/
 
 ## Stack
 Astro 7 + React (islas), TypeScript, MapLibre GL, SunCalc. Sitio estático. Un pipeline en Node (`pipeline/`) descarga datos municipales y del Catastro y precalcula las horas de sol por terraza.
